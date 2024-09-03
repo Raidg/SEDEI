@@ -1414,3 +1414,20 @@ def FeatureDisZbaSh2Add
                      !strconcat(zba_Sh2add_summary, "enable' ", zba_Sh2add_description)>;
 
 def HasZbaSh2Add : Predicate<enable_instruction<"Sh2Add", "Zba">.out>;
+
+//===----------------------------------------------------------------------===//
+// Sh3add
+defvar zba_Sh3add_description = "(Shift left by 2 and add)";
+defvar zba_Sh3add_summary = "'zba sh3add ";
+
+def FeatureEnaZbaSh3Add
+    : RISCVExtension<instr_march_name<"zba", "sh3add", "e">.out,
+                     1, 0,
+                     !strconcat(zba_Sh3add_summary, "enable' ", zba_Sh3add_description)>;
+
+def FeatureDisZbaSh3Add
+    : RISCVExtension<instr_march_name<"zba", "sh3add", "d">.out,
+                     1, 0,
+                     !strconcat(zba_Sh3add_summary, "enable' ", zba_Sh3add_description)>;
+
+def HasZbaSh3Add : Predicate<enable_instruction<"Sh3Add", "Zba">.out>;
