@@ -282,14 +282,17 @@ def XNOR  : ALU_rr<0b0100000, 0b100, "xnor">,
 } // Predicates = [HasStdExtZbbOrZbkb]
 
 let Predicates = [HasStdExtZba] in {
-def SH2ADD : ALU_rr<0b0010000, 0b100, "sh2add">,
-             Sched<[WriteSHXADD, ReadSHXADD, ReadSHXADD]>;
 def SH3ADD : ALU_rr<0b0010000, 0b110, "sh3add">,
              Sched<[WriteSHXADD, ReadSHXADD, ReadSHXADD]>;
 } // Predicates = [HasStdExtZba]
 
-let Predicates = [HasZbaSha1Add] in {
+let Predicates = [HasZbaSh1Add] in {
   def SH1ADD : ALU_rr<0b0010000, 0b010, "sh1add">,
+              Sched<[WriteSHXADD, ReadSHXADD, ReadSHXADD]>;
+}
+
+let Predicates = [HasZbaSh2Add] in {
+  def SH2ADD : ALU_rr<0b0010000, 0b100, "sh2add">,
               Sched<[WriteSHXADD, ReadSHXADD, ReadSHXADD]>;
 }
 
@@ -663,7 +666,7 @@ def : Pat<(i64 (and GPR:$rs, 0xFFFF)), (PACKW GPR:$rs, (XLenVT X0))>;
 
 
 foreach i = {1,2,3} in {
-  defvar x = !cond(!eq(i, 1) : HasZbaSha1Add, true : HasStdExtZba);
+  defvar x = !cond(!eq(i, 1) : HasZbaSh1Add, !eq(i, 2) : HasZbaSh2Add, true : HasStdExtZba);
 
   let Predicates = [x] in {
     defvar shxadd = !cast<Instruction>("SH"#i#"ADD");
@@ -727,13 +730,16 @@ foreach i = {1,2,3} in {
             (!cast<Instruction>("SH"#i#"ADD_UW") pat:$rs1, GPR:$rs2)>;
 }
 
-let Predicates = [HasZbaSha1Add] in {
+let Predicates = [HasZbaSh1Add] in {
   def : Pat<(i64 (add_like_non_imm12 (and GPR:$rs1, 0xFFFFFFFE), (XLenVT GPR:$rs2))),
             (SH1ADD (XLenVT (SRLIW GPR:$rs1, 1)), GPR:$rs2)>;
 }
 
-def : Pat<(i64 (add_like_non_imm12 (and GPR:$rs1, 0xFFFFFFFC), (XLenVT GPR:$rs2))),
-          (SH2ADD (XLenVT (SRLIW GPR:$rs1, 2)), GPR:$rs2)>;
+let Predicates = [HasZbaSh2Add] in {
+  def : Pat<(i64 (add_like_non_imm12 (and GPR:$rs1, 0xFFFFFFFC), (XLenVT GPR:$rs2))),
+            (SH2ADD (XLenVT (SRLIW GPR:$rs1, 2)), GPR:$rs2)>;
+}
+
 def : Pat<(i64 (add_like_non_imm12 (and GPR:$rs1, 0xFFFFFFF8), (XLenVT GPR:$rs2))),
           (SH3ADD (XLenVT (SRLIW GPR:$rs1, 3)), GPR:$rs2)>;
 
@@ -825,7 +831,7 @@ def : Pat<(shl (i64 (zext i32:$rs1)), uimm5:$shamt),
           (SLLI_UW GPR:$rs1, uimm5:$shamt)>;
 
 foreach i = {1,2,3} in {
-  defvar x = !cond(!eq(i, 1) : HasZbaSha1Add, true : HasStdExtZba);
+  defvar x = !cond(!eq(i, 1) : HasZbaSh1Add, !eq(i, 2) : HasZbaSh2Add, true : HasStdExtZba);
   
   let Predicates = [x] in {
     defvar shxadd = !cast<Instruction>("SH"#i#"ADD");
