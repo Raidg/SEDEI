@@ -1347,3 +1347,19 @@ def FeatureForcedSWShadowStack : SubtargetFeature<
     "forced-sw-shadow-stack", "HasForcedSWShadowStack", "true",
     "Implement shadow stack with software.">;
 def HasForcedSWShadowStack : Predicate<"Subtarget->hasForcedSWShadowStack()">;
+
+//===----------------------------------------------------------------------===//
+// Enabling/disabling of individual Zba-instructions
+//===----------------------------------------------------------------------===//
+
+def FeatureEnaZbaAddUw
+    : RISCVExtension<"zbaxadduwe", 1, 0,
+                     "'zba add.uw enable' (XLEN-wide addition instruction of least-significant words)">;
+
+def FeatureDisZbaAddUw
+    : RISCVExtension<"zbaxadduwd", 1, 0,
+                     "'zba add.uw disable' (XLEN-wide addition instruction of least-significant words)">;
+
+def HasZbaAddUw : Predicate<"(Subtarget->hasEnaZbaAddUw() || Subtarget->hasStdExtZba()) && !Subtarget->hasDisZbaAddUw()">;
+
+def NotHasZbaAddUw : Predicate<"!Subtarget->hasStdExtZba() || Subtarget->hasDisZbaAddUw()">;
