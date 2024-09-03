@@ -1352,14 +1352,48 @@ def HasForcedSWShadowStack : Predicate<"Subtarget->hasForcedSWShadowStack()">;
 // Enabling/disabling of individual Zba-instructions
 //===----------------------------------------------------------------------===//
 
+// Used to simplify the condition to test whether the instruction is enabled/disabled or not
+// The format is: (Subtarget->hasEna<ext><instr>() || Subtarget->hasStdExt<ext>()) && !Subtarget->hasDis<ext><instr>()
+class enable_instruction<string instr, string extension>{
+    string out = !strconcat("(Subtarget->hasEna", extension, instr,"() || Subtarget->hasStdExt", extension, "()) && !Subtarget->hasDis", extension, instr, "()");
+}
+
+// Used to standardize the naming of the intruction-enabling
+// The format is: <ext>x<instr><e|d>
+class instr_march_name<string extension, string instr, string enable_or_disable>{
+    string out = !strconcat(extension, "x", instr, enable_or_disable);
+}
+
+//===----------------------------------------------------------------------===//
+// add.uw:
+def zba_adduw_description {string str = "(XLEN-wide addition instruction of least-significant words)";}
+def zba_adduw_summary {string str = "'zba add.uw ";}
+
 def FeatureEnaZbaAddUw
-    : RISCVExtension<"zbaxadduwe", 1, 0,
-                     "'zba add.uw enable' (XLEN-wide addition instruction of least-significant words)">;
+    : RISCVExtension<instr_march_name<"zba", "adduw", "e">.out, 
+                     1, 0,
+                     !strconcat(zba_adduw_summary.str, "enable' ", zba_adduw_description.str)>;
 
 def FeatureDisZbaAddUw
-    : RISCVExtension<"zbaxadduwd", 1, 0,
-                     "'zba add.uw disable' (XLEN-wide addition instruction of least-significant words)">;
+    : RISCVExtension<instr_march_name<"zba", "adduw", "d">.out,
+                     1, 0,
+                     !strconcat(zba_adduw_summary.str, "disable' ", zba_adduw_description.str)>;
 
-def HasZbaAddUw : Predicate<"(Subtarget->hasEnaZbaAddUw() || Subtarget->hasStdExtZba()) && !Subtarget->hasDisZbaAddUw()">;
+def HasZbaAddUw : Predicate<enable_instruction<"AddUw", "Zba">.out>;
 
-def NotHasZbaAddUw : Predicate<"!Subtarget->hasStdExtZba() || Subtarget->hasDisZbaAddUw()">;
+//===----------------------------------------------------------------------===//
+// sha1add
+def zba_sha1add_description {string str = "(Shift left by 1 and add)";}
+def zba_sha1add_summary {string str = "'zba add.uw ";}
+
+def FeatureEnaZbaSha1Add
+    : RISCVExtension<instr_march_name<"zba", "sha1add", "e">.out,
+                     1, 0,
+                     !strconcat(zba_sha1add_summary.str, "enable' ", zba_sha1add_description.str)>;
+
+def FeatureDisZbaSha1Add
+    : RISCVExtension<instr_march_name<"zba", "sha1add", "d">.out,
+                     1, 0,
+                     !strconcat(zba_sha1add_summary.str, "enable' ", zba_sha1add_description.str)>;
+
+def HasZbaSha1Add : Predicate<enable_instruction<"Sha1Add", "Zba">.out>;
