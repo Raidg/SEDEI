@@ -282,13 +282,16 @@ def XNOR  : ALU_rr<0b0100000, 0b100, "xnor">,
 } // Predicates = [HasStdExtZbbOrZbkb]
 
 let Predicates = [HasStdExtZba] in {
-def SH1ADD : ALU_rr<0b0010000, 0b010, "sh1add">,
-             Sched<[WriteSHXADD, ReadSHXADD, ReadSHXADD]>;
 def SH2ADD : ALU_rr<0b0010000, 0b100, "sh2add">,
              Sched<[WriteSHXADD, ReadSHXADD, ReadSHXADD]>;
 def SH3ADD : ALU_rr<0b0010000, 0b110, "sh3add">,
              Sched<[WriteSHXADD, ReadSHXADD, ReadSHXADD]>;
 } // Predicates = [HasStdExtZba]
+
+let Predicates = [HasZbaSha1Add] in {
+  def SH1ADD : ALU_rr<0b0010000, 0b010, "sh1add">,
+              Sched<[WriteSHXADD, ReadSHXADD, ReadSHXADD]>;
+}
 
 let Predicates = [HasZbaAddUw, IsRV64] in {
 def ADD_UW : ALUW_rr<0b0000100, 0b000, "add.uw">,
@@ -658,28 +661,31 @@ def : Pat<(i32 (and GPR:$rs, 0xFFFF)), (PACK GPR:$rs, (XLenVT X0))>;
 let Predicates = [HasStdExtZbkb, NoStdExtZbb, IsRV64] in
 def : Pat<(i64 (and GPR:$rs, 0xFFFF)), (PACKW GPR:$rs, (XLenVT X0))>;
 
-let Predicates = [HasStdExtZba] in {
 
 foreach i = {1,2,3} in {
-  defvar shxadd = !cast<Instruction>("SH"#i#"ADD");
-  def : Pat<(XLenVT (add_like_non_imm12 (shl GPR:$rs1, (XLenVT i)), GPR:$rs2)),
-            (shxadd GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(XLenVT (riscv_shl_add GPR:$rs1, (XLenVT i), GPR:$rs2)),
-            (shxadd GPR:$rs1, GPR:$rs2)>;
+  defvar x = !cond(!eq(i, 1) : HasZbaSha1Add, true : HasStdExtZba);
 
-  defvar pat = !cast<ComplexPattern>("sh"#i#"add_op");
-  // More complex cases use a ComplexPattern.
-  def : Pat<(XLenVT (add_like_non_imm12 pat:$rs1, GPR:$rs2)),
-            (shxadd pat:$rs1, GPR:$rs2)>;
+  let Predicates = [x] in {
+    defvar shxadd = !cast<Instruction>("SH"#i#"ADD");
+    def : Pat<(XLenVT (add_like_non_imm12 (shl GPR:$rs1, (XLenVT i)), GPR:$rs2)),
+              (shxadd GPR:$rs1, GPR:$rs2)>;
+    def : Pat<(XLenVT (riscv_shl_add GPR:$rs1, (XLenVT i), GPR:$rs2)),
+              (shxadd GPR:$rs1, GPR:$rs2)>;
+
+    defvar pat = !cast<ComplexPattern>("sh"#i#"add_op");
+    // More complex cases use a ComplexPattern.
+    def : Pat<(XLenVT (add_like_non_imm12 pat:$rs1, GPR:$rs2)),
+              (shxadd pat:$rs1, GPR:$rs2)>;
+  }
 }
 
+let Predicates = [HasStdExtZba] in {
 def : Pat<(add_like (XLenVT GPR:$r), CSImm12MulBy4:$i),
           (SH2ADD (XLenVT (ADDI (XLenVT X0), (SimmShiftRightBy2XForm CSImm12MulBy4:$i))),
                   GPR:$r)>;
 def : Pat<(add_like (XLenVT GPR:$r), CSImm12MulBy8:$i),
           (SH3ADD (XLenVT (ADDI (XLenVT X0), (SimmShiftRightBy3XForm CSImm12MulBy8:$i))),
                   GPR:$r)>;
-
 } // Predicates = [HasStdExtZba]
 
 let Predicates = [HasStdExtZba, IsRV64] in {
@@ -693,11 +699,11 @@ def : Pat<(i64 (and GPR:$rs1, Shifted32OnesMask:$mask)),
                    Shifted32OnesMask:$mask)>;
 
 foreach i = {1,2,3} in {
-  defvar shxadd_uw = !cast<Instruction>("SH"#i#"ADD_UW");
-  def : Pat<(i64 (add_like_non_imm12 (shl (and GPR:$rs1, 0xFFFFFFFF), (i64 i)), (XLenVT GPR:$rs2))),
-            (shxadd_uw GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(i64 (riscv_shl_add (and GPR:$rs1, 0xFFFFFFFF), (i64 i), GPR:$rs2)),
-            (shxadd_uw GPR:$rs1, GPR:$rs2)>;                   
+    defvar shxadd_uw = !cast<Instruction>("SH"#i#"ADD_UW");
+    def : Pat<(i64 (add_like_non_imm12 (shl (and GPR:$rs1, 0xFFFFFFFF), (i64 i)), (XLenVT GPR:$rs2))),
+              (shxadd_uw GPR:$rs1, GPR:$rs2)>;
+    def : Pat<(i64 (riscv_shl_add (and GPR:$rs1, 0xFFFFFFFF), (i64 i), GPR:$rs2)),
+              (shxadd_uw GPR:$rs1, GPR:$rs2)>;               
 }
 
 let Predicates = [HasZbaAddUw, IsRV64] in {
@@ -715,13 +721,17 @@ def : Pat<(i64 (add_like_non_imm12 (and (shl GPR:$rs1, (i64 3)), 0x7FFFFFFFF), (
 
 // More complex cases use a ComplexPattern.
 foreach i = {1,2,3} in {
+
   defvar pat = !cast<ComplexPattern>("sh"#i#"add_uw_op");
   def : Pat<(i64 (add_like_non_imm12 pat:$rs1, (XLenVT GPR:$rs2))),
             (!cast<Instruction>("SH"#i#"ADD_UW") pat:$rs1, GPR:$rs2)>;
 }
 
-def : Pat<(i64 (add_like_non_imm12 (and GPR:$rs1, 0xFFFFFFFE), (XLenVT GPR:$rs2))),
-          (SH1ADD (XLenVT (SRLIW GPR:$rs1, 1)), GPR:$rs2)>;
+let Predicates = [HasZbaSha1Add] in {
+  def : Pat<(i64 (add_like_non_imm12 (and GPR:$rs1, 0xFFFFFFFE), (XLenVT GPR:$rs2))),
+            (SH1ADD (XLenVT (SRLIW GPR:$rs1, 1)), GPR:$rs2)>;
+}
+
 def : Pat<(i64 (add_like_non_imm12 (and GPR:$rs1, 0xFFFFFFFC), (XLenVT GPR:$rs2))),
           (SH2ADD (XLenVT (SRLIW GPR:$rs1, 2)), GPR:$rs2)>;
 def : Pat<(i64 (add_like_non_imm12 (and GPR:$rs1, 0xFFFFFFF8), (XLenVT GPR:$rs2))),
@@ -804,20 +814,26 @@ def : Pat<(i32 (or (shl GPR:$rs2, (i64 16)), (zexti16i32 (i32 GPR:$rs1)))),
           (PACKW GPR:$rs1, GPR:$rs2)>;
 } // Predicates = [HasStdExtZbkb, IsRV64]
 
+let Predicates = [HasZbaAddUw, IsRV64] in {
+  def : Pat<(i64 (add_like_non_imm12 (zext GPR:$rs1), GPR:$rs2)),
+            (ADD_UW GPR:$rs1, GPR:$rs2)>;
+  def : Pat<(zext GPR:$src), (ADD_UW GPR:$src, (XLenVT X0))>;
+}
+
 let Predicates = [HasStdExtZba, IsRV64] in {
 def : Pat<(shl (i64 (zext i32:$rs1)), uimm5:$shamt),
           (SLLI_UW GPR:$rs1, uimm5:$shamt)>;
 
-def : Pat<(i64 (add_like_non_imm12 (zext GPR:$rs1), GPR:$rs2)),
-          (ADD_UW GPR:$rs1, GPR:$rs2)>;
-def : Pat<(zext GPR:$src), (ADD_UW GPR:$src, (XLenVT X0))>;
-
 foreach i = {1,2,3} in {
-  defvar shxadd = !cast<Instruction>("SH"#i#"ADD");
-  def : Pat<(i32 (add_like_non_imm12 (shl GPR:$rs1, (i64 i)), GPR:$rs2)),
-            (shxadd GPR:$rs1, GPR:$rs2)>;
-  def : Pat<(i32 (riscv_shl_add GPR:$rs1, (i32 i), GPR:$rs2)),
-            (shxadd GPR:$rs1, GPR:$rs2)>;
+  defvar x = !cond(!eq(i, 1) : HasZbaSha1Add, true : HasStdExtZba);
+  
+  let Predicates = [x] in {
+    defvar shxadd = !cast<Instruction>("SH"#i#"ADD");
+    def : Pat<(i32 (add_like_non_imm12 (shl GPR:$rs1, (i64 i)), GPR:$rs2)),
+              (shxadd GPR:$rs1, GPR:$rs2)>;
+    def : Pat<(i32 (riscv_shl_add GPR:$rs1, (i32 i), GPR:$rs2)),
+              (shxadd GPR:$rs1, GPR:$rs2)>;
+  }
 }
 }
 

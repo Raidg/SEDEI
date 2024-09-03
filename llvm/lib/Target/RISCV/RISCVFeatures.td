@@ -1366,34 +1366,34 @@ class instr_march_name<string extension, string instr, string enable_or_disable>
 
 //===----------------------------------------------------------------------===//
 // add.uw:
-def zba_adduw_description {string str = "(XLEN-wide addition instruction of least-significant words)";}
-def zba_adduw_summary {string str = "'zba add.uw ";}
+defvar zba_adduw_description = "(XLEN-wide addition instruction of least-significant words)";
+defvar zba_adduw_summary = "'zba add.uw ";
 
 def FeatureEnaZbaAddUw
     : RISCVExtension<instr_march_name<"zba", "adduw", "e">.out, 
                      1, 0,
-                     !strconcat(zba_adduw_summary.str, "enable' ", zba_adduw_description.str)>;
+                     !strconcat(zba_adduw_summary, "enable' ", zba_adduw_description)>;
 
 def FeatureDisZbaAddUw
     : RISCVExtension<instr_march_name<"zba", "adduw", "d">.out,
                      1, 0,
-                     !strconcat(zba_adduw_summary.str, "disable' ", zba_adduw_description.str)>;
+                     !strconcat(zba_adduw_summary, "disable' ", zba_adduw_description)>;
 
 def HasZbaAddUw : Predicate<enable_instruction<"AddUw", "Zba">.out>;
 
 //===----------------------------------------------------------------------===//
-// sha1add
-def zba_sha1add_description {string str = "(Shift left by 1 and add)";}
-def zba_sha1add_summary {string str = "'zba add.uw ";}
+// Sh1add
+defvar zba_Sh1add_description = "(Shift left by 1 and add)";
+defvar zba_Sh1add_summary = "'zba add.uw ";
 
-def FeatureEnaZbaSha1Add
-    : RISCVExtension<instr_march_name<"zba", "sha1add", "e">.out,
+def FeatureEnaZbaSh1Add
+    : RISCVExtension<instr_march_name<"zba", "sh1add", "e">.out,
                      1, 0,
-                     !strconcat(zba_sha1add_summary.str, "enable' ", zba_sha1add_description.str)>;
+                     !strconcat(zba_Sh1add_summary, "enable' ", zba_Sh1add_description)>;
 
-def FeatureDisZbaSha1Add
-    : RISCVExtension<instr_march_name<"zba", "sha1add", "d">.out,
+def FeatureDisZbaSh1Add
+    : RISCVExtension<instr_march_name<"zba", "sh1add", "d">.out,
                      1, 0,
-                     !strconcat(zba_sha1add_summary.str, "enable' ", zba_sha1add_description.str)>;
+                     !strconcat(zba_Sh1add_summary, "enable' ", zba_Sh1add_description)>;
 
-def HasZbaSha1Add : Predicate<enable_instruction<"Sha1Add", "Zba">.out>;
+def HasZbaSha1Add : Predicate<enable_instruction<"Sh1Add", "Zba">.out>;
