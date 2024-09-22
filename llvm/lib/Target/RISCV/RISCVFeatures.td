@@ -1431,3 +1431,71 @@ def FeatureDisZbaSh3Add
                      !strconcat(zba_Sh3add_summary, "enable' ", zba_Sh3add_description)>;
 
 def HasZbaSh3Add : Predicate<enable_instruction<"Sh3Add", "Zba">.out>;
+
+//===----------------------------------------------------------------------===//
+// Sh1AddUw
+defvar zba_Sh1AddUw_description = "(Shift unsigned word left by 1 and add)";
+defvar zba_Sh1AddUw_summary = "'zba sh1adduw ";
+
+def FeatureEnaZbaSh1AddUw
+    : RISCVExtension<instr_march_name<"zba", "sh1adduw", "e">.out,
+                     1, 0,
+                     !strconcat(zba_Sh1AddUw_summary, "enable' ", zba_Sh1AddUw_description)>;
+
+def FeatureDisZbaSh1AddUw
+    : RISCVExtension<instr_march_name<"zba", "sh1adduw", "d">.out,
+                     1, 0,
+                     !strconcat(zba_Sh1AddUw_summary, "enable' ", zba_Sh1AddUw_description)>;
+
+def HasZbaSh1AddUw : Predicate<enable_instruction<"Sh1AddUw", "Zba">.out>;
+
+//===----------------------------------------------------------------------===//
+// Sh2AddUw
+defvar zba_Sh2AddUw_description = "(Shift unsigned word left by 2 and add)";
+defvar zba_Sh2AddUw_summary = "'zba sh2adduw ";
+
+def FeatureEnaZbaSh2AddUw
+    : RISCVExtension<instr_march_name<"zba", "sh2adduw", "e">.out,
+                     1, 0,
+                     !strconcat(zba_Sh2AddUw_summary, "enable' ", zba_Sh2AddUw_description)>;
+
+def FeatureDisZbaSh2AddUw
+    : RISCVExtension<instr_march_name<"zba", "sh2adduw", "d">.out,
+                     1, 0,
+                     !strconcat(zba_Sh2AddUw_summary, "enable' ", zba_Sh2AddUw_description)>;
+
+def HasZbaSh2AddUw : Predicate<enable_instruction<"Sh2AddUw", "Zba">.out>;
+
+//===----------------------------------------------------------------------===//
+// Sh3AddUw
+defvar zba_Sh3AddUw_description = "(Shift unsigned word left by 3 and add)";
+defvar zba_Sh3AddUw_summary = "'zba sh3adduw ";
+
+def FeatureEnaZbaSh3AddUw
+    : RISCVExtension<instr_march_name<"zba", "sh3adduw", "e">.out,
+                     1, 0,
+                     !strconcat(zba_Sh3AddUw_summary, "enable' ", zba_Sh3AddUw_description)>;
+
+def FeatureDisZbaSh3AddUw
+    : RISCVExtension<instr_march_name<"zba", "sh3adduw", "d">.out,
+                     1, 0,
+                     !strconcat(zba_Sh3AddUw_summary, "enable' ", zba_Sh3AddUw_description)>;
+
+def HasZbaSh3AddUw : Predicate<enable_instruction<"Sh3AddUw", "Zba">.out>;
+
+//===----------------------------------------------------------------------===//
+// slli.uw
+defvar zba_SlliUw_description = "(Shift-left unsigned word (Immediate))";
+defvar zba_SlliUw_summary = "'zba slli.uw ";
+
+def FeatureEnaZbaSlliUw
+    : RISCVExtension<instr_march_name<"zba", "slliuw", "e">.out,
+                     1, 0,
+                     !strconcat(zba_SlliUw_summary, "enable' ", zba_SlliUw_description)>;
+
+def FeatureDisZbaSlliUw
+    : RISCVExtension<instr_march_name<"zba", "slliuw", "d">.out,
+                     1, 0,
+                     !strconcat(zba_SlliUw_summary, "enable' ", zba_SlliUw_description)>;
+
+def HasZbaSlliUw : Predicate<enable_instruction<"SlliUw", "Zba">.out>;
