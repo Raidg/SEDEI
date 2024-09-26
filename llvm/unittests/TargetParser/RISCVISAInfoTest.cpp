@@ -911,6 +911,22 @@ R"(All available -march extensions for RISC-V
     zcmp                 1.0
     zcmt                 1.0
     zba                  1.0
+    zbaxadduwd           1.0
+    zbaxadduwe           1.0
+    zbaxsh1addd          1.0
+    zbaxsh1adde          1.0
+    zbaxsh1adduwd        1.0
+    zbaxsh1adduwe        1.0
+    zbaxsh2addd          1.0
+    zbaxsh2adde          1.0
+    zbaxsh2adduwd        1.0
+    zbaxsh2adduwe        1.0
+    zbaxsh3addd          1.0
+    zbaxsh3adde          1.0
+    zbaxsh3adduwd        1.0
+    zbaxsh3adduwe        1.0
+    zbaxslliuwd          1.0
+    zbaxslliuwe          1.0
     zbb                  1.0
     zbc                  1.0
     zbkb                 1.0

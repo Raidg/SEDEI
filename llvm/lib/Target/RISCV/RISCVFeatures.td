@@ -1379,7 +1379,9 @@ def FeatureDisZbaAddUw
                      1, 0,
                      !strconcat(zba_adduw_summary, "disable' ", zba_adduw_description)>;
 
-def HasZbaAddUw : Predicate<enable_instruction<"AddUw", "Zba">.out>;
+def HasZbaAddUw : Predicate<enable_instruction<"AddUw", "Zba">.out>,
+                AssemblerPredicate<(all_of FeatureStdExtZba),
+                "'Zba' (Address Generation Instructions)">;
 
 //===----------------------------------------------------------------------===//
 // Sh1add
@@ -1396,7 +1398,9 @@ def FeatureDisZbaSh1Add
                      1, 0,
                      !strconcat(zba_Sh1add_summary, "enable' ", zba_Sh1add_description)>;
 
-def HasZbaSh1Add : Predicate<enable_instruction<"Sh1Add", "Zba">.out>;
+def HasZbaSh1Add : Predicate<enable_instruction<"Sh1Add", "Zba">.out>,
+                AssemblerPredicate<(all_of FeatureStdExtZba),
+                "'Zba' (Address Generation Instructions)">;
 
 //===----------------------------------------------------------------------===//
 // Sh2add
@@ -1413,7 +1417,9 @@ def FeatureDisZbaSh2Add
                      1, 0,
                      !strconcat(zba_Sh2add_summary, "enable' ", zba_Sh2add_description)>;
 
-def HasZbaSh2Add : Predicate<enable_instruction<"Sh2Add", "Zba">.out>;
+def HasZbaSh2Add : Predicate<enable_instruction<"Sh2Add", "Zba">.out>,
+                AssemblerPredicate<(all_of FeatureStdExtZba),
+                "'Zba' (Address Generation Instructions)">;
 
 //===----------------------------------------------------------------------===//
 // Sh3add
@@ -1430,7 +1436,9 @@ def FeatureDisZbaSh3Add
                      1, 0,
                      !strconcat(zba_Sh3add_summary, "enable' ", zba_Sh3add_description)>;
 
-def HasZbaSh3Add : Predicate<enable_instruction<"Sh3Add", "Zba">.out>;
+def HasZbaSh3Add : Predicate<enable_instruction<"Sh3Add", "Zba">.out>,
+                AssemblerPredicate<(all_of FeatureStdExtZba),
+                "'Zba' (Address Generation Instructions)">;
 
 //===----------------------------------------------------------------------===//
 // Sh1AddUw
@@ -1447,7 +1455,9 @@ def FeatureDisZbaSh1AddUw
                      1, 0,
                      !strconcat(zba_Sh1AddUw_summary, "enable' ", zba_Sh1AddUw_description)>;
 
-def HasZbaSh1AddUw : Predicate<enable_instruction<"Sh1AddUw", "Zba">.out>;
+def HasZbaSh1AddUw : Predicate<enable_instruction<"Sh1AddUw", "Zba">.out>,
+                AssemblerPredicate<(all_of FeatureStdExtZba),
+                "'Zba' (Address Generation Instructions)">;
 
 //===----------------------------------------------------------------------===//
 // Sh2AddUw
@@ -1464,7 +1474,9 @@ def FeatureDisZbaSh2AddUw
                      1, 0,
                      !strconcat(zba_Sh2AddUw_summary, "enable' ", zba_Sh2AddUw_description)>;
 
-def HasZbaSh2AddUw : Predicate<enable_instruction<"Sh2AddUw", "Zba">.out>;
+def HasZbaSh2AddUw : Predicate<enable_instruction<"Sh2AddUw", "Zba">.out>,
+                AssemblerPredicate<(all_of FeatureStdExtZba),
+                "'Zba' (Address Generation Instructions)">;
 
 //===----------------------------------------------------------------------===//
 // Sh3AddUw
@@ -1481,7 +1493,9 @@ def FeatureDisZbaSh3AddUw
                      1, 0,
                      !strconcat(zba_Sh3AddUw_summary, "enable' ", zba_Sh3AddUw_description)>;
 
-def HasZbaSh3AddUw : Predicate<enable_instruction<"Sh3AddUw", "Zba">.out>;
+def HasZbaSh3AddUw : Predicate<enable_instruction<"Sh3AddUw", "Zba">.out>,
+                AssemblerPredicate<(all_of FeatureStdExtZba),
+                "'Zba' (Address Generation Instructions)">;
 
 //===----------------------------------------------------------------------===//
 // slli.uw
@@ -1498,4 +1512,6 @@ def FeatureDisZbaSlliUw
                      1, 0,
                      !strconcat(zba_SlliUw_summary, "enable' ", zba_SlliUw_description)>;
 
-def HasZbaSlliUw : Predicate<enable_instruction<"SlliUw", "Zba">.out>;
+def HasZbaSlliUw : Predicate<enable_instruction<"SlliUw", "Zba">.out>,
+                AssemblerPredicate<(all_of FeatureStdExtZba),
+                "'Zba' (Address Generation Instructions)">;
