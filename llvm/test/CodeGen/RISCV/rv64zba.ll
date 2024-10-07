@@ -7,6 +7,8 @@
 ; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXADDUWE
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zbaxsh1adde -verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSH1ADDE
+; RUN: llc -mtriple=riscv64 -mattr=+m,+zbaxsh1adduwe -verify-machineinstrs < %s \
+; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSH1ADDUWE
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zba,+zbb -verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s -check-prefixes=CHECK,RV64ZBA,RV64ZBAZBB,RV64ZBAZBBNOZBS
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zba,+zbb,+zbs -verify-machineinstrs < %s \
@@ -153,6 +155,12 @@ define signext i16 @sh1add(i64 %0, ptr %1) {
 ; RV64I-NEXT:    lh a0, 0(a0)
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDE-LABEL: sh1add:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a1
+; ZBAXSH1ADDE-NEXT:    lh a0, 0(a0)
+; ZBAXSH1ADDE-NEXT:    ret
+;
 ; RV64ZBA-LABEL: sh1add:
 ; RV64ZBA:       # %bb.0:
 ; RV64ZBA-NEXT:    sh1add a0, a0, a1
@@ -208,6 +216,12 @@ define signext i16 @sh1adduw(i32 signext %0, ptr %1) {
 ; RV64I-NEXT:    lh a0, 0(a0)
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDUWE-LABEL: sh1adduw:
+; ZBAXSH1ADDUWE:       # %bb.0:
+; ZBAXSH1ADDUWE-NEXT:    sh1add.uw a0, a0, a1
+; ZBAXSH1ADDUWE-NEXT:    lh a0, 0(a0)
+; ZBAXSH1ADDUWE-NEXT:    ret
+;
 ; RV64ZBA-LABEL: sh1adduw:
 ; RV64ZBA:       # %bb.0:
 ; RV64ZBA-NEXT:    sh1add.uw a0, a0, a1
@@ -227,6 +241,11 @@ define i64 @sh1adduw_2(i64 %0, i64 %1) {
 ; RV64I-NEXT:    add a0, a0, a1
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDUWE-LABEL: sh1adduw_2:
+; ZBAXSH1ADDUWE:       # %bb.0:
+; ZBAXSH1ADDUWE-NEXT:    sh1add.uw a0, a0, a1
+; ZBAXSH1ADDUWE-NEXT:    ret
+;
 ; RV64ZBA-LABEL: sh1adduw_2:
 ; RV64ZBA:       # %bb.0:
 ; RV64ZBA-NEXT:    sh1add.uw a0, a0, a1
@@ -244,6 +263,11 @@ define i64 @sh1adduw_3(i64 %0, i64 %1) {
 ; RV64I-NEXT:    srli a0, a0, 31
 ; RV64I-NEXT:    or a0, a0, a1
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH1ADDUWE-LABEL: sh1adduw_3:
+; ZBAXSH1ADDUWE:       # %bb.0:
+; ZBAXSH1ADDUWE-NEXT:    sh1add.uw a0, a0, a1
+; ZBAXSH1ADDUWE-NEXT:    ret
 ;
 ; RV64ZBA-LABEL: sh1adduw_3:
 ; RV64ZBA:       # %bb.0:
@@ -408,6 +432,12 @@ define i64 @addmul6(i64 %a, i64 %b) {
 ; RV64I-NEXT:    add a0, a0, a1
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDE-LABEL: addmul6:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a0
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a1
+; ZBAXSH1ADDE-NEXT:    ret
+;
 ; RV64ZBA-LABEL: addmul6:
 ; RV64ZBA:       # %bb.0:
 ; RV64ZBA-NEXT:    sh1add a0, a0, a0
@@ -426,6 +456,12 @@ define i64 @disjointormul6(i64 %a, i64 %b) {
 ; RV64I-NEXT:    sub a0, a0, a2
 ; RV64I-NEXT:    or a0, a0, a1
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH1ADDE-LABEL: disjointormul6:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a0
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a1
+; ZBAXSH1ADDE-NEXT:    ret
 ;
 ; RV64ZBA-LABEL: disjointormul6:
 ; RV64ZBA:       # %bb.0:
@@ -664,6 +700,12 @@ define i64 @mul96(i64 %a) {
 ; RV64I-NEXT:    sub a0, a0, a1
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDE-LABEL: mul96:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a0
+; ZBAXSH1ADDE-NEXT:    slli a0, a0, 5
+; ZBAXSH1ADDE-NEXT:    ret
+;
 ; RV64ZBA-LABEL: mul96:
 ; RV64ZBA:       # %bb.0:
 ; RV64ZBA-NEXT:    sh1add a0, a0, a0
@@ -714,6 +756,13 @@ define i64 @mul125(i64 %a) {
 ; RV64I-NEXT:    mul a0, a0, a1
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDE-LABEL: mul125:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    sh1add a1, a0, a0
+; ZBAXSH1ADDE-NEXT:    slli a0, a0, 7
+; ZBAXSH1ADDE-NEXT:    sub a0, a0, a1
+; ZBAXSH1ADDE-NEXT:    ret
+;
 ; RV64ZBA-LABEL: mul125:
 ; RV64ZBA:       # %bb.0:
 ; RV64ZBA-NEXT:    sh1add a1, a0, a0
@@ -730,6 +779,13 @@ define i64 @mul131(i64 %a) {
 ; RV64I-NEXT:    li a1, 131
 ; RV64I-NEXT:    mul a0, a0, a1
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH1ADDE-LABEL: mul131:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    sh1add a1, a0, a0
+; ZBAXSH1ADDE-NEXT:    slli a0, a0, 7
+; ZBAXSH1ADDE-NEXT:    add a0, a0, a1
+; ZBAXSH1ADDE-NEXT:    ret
 ;
 ; RV64ZBA-LABEL: mul131:
 ; RV64ZBA:       # %bb.0:
@@ -835,6 +891,12 @@ define i64 @zext_mul96(i32 signext %a) {
 ; RV64I-NEXT:    sub a0, a0, a1
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDE-LABEL: zext_mul96:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    slli.uw a0, a0, 5
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a0
+; ZBAXSH1ADDE-NEXT:    ret
+;
 ; RV64ZBA-LABEL: zext_mul96:
 ; RV64ZBA:       # %bb.0:
 ; RV64ZBA-NEXT:    slli.uw a0, a0, 5
@@ -891,6 +953,12 @@ define i64 @zext_mul12884901888(i32 signext %a) {
 ; RV64I-NEXT:    slli a0, a0, 34
 ; RV64I-NEXT:    sub a0, a0, a1
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH1ADDE-LABEL: zext_mul12884901888:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a0
+; ZBAXSH1ADDE-NEXT:    slli a0, a0, 32
+; ZBAXSH1ADDE-NEXT:    ret
 ;
 ; RV64ZBA-LABEL: zext_mul12884901888:
 ; RV64ZBA:       # %bb.0:
@@ -1060,6 +1128,12 @@ define i64 @mul258(i64 %a) {
 ; RV64I-NEXT:    li a1, 258
 ; RV64I-NEXT:    mul a0, a0, a1
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH1ADDE-LABEL: mul258:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    slli a1, a0, 8
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a1
+; ZBAXSH1ADDE-NEXT:    ret
 ;
 ; RV64ZBA-LABEL: mul258:
 ; RV64ZBA:       # %bb.0:
@@ -1308,6 +1382,12 @@ define i64 @mul4098(i64 %a) {
 ; RV64I-NEXT:    add a0, a0, a1
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDE-LABEL: mul4098:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    slli a1, a0, 12
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a1
+; ZBAXSH1ADDE-NEXT:    ret
+;
 ; RV64ZBA-LABEL: mul4098:
 ; RV64ZBA:       # %bb.0:
 ; RV64ZBA-NEXT:    slli a1, a0, 12
@@ -1358,6 +1438,12 @@ define signext i32 @mulw192(i32 signext %a) {
 ; RV64I-NEXT:    slli a0, a0, 8
 ; RV64I-NEXT:    subw a0, a0, a1
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH1ADDE-LABEL: mulw192:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a0
+; ZBAXSH1ADDE-NEXT:    slliw a0, a0, 6
+; ZBAXSH1ADDE-NEXT:    ret
 ;
 ; RV64ZBA-LABEL: mulw192:
 ; RV64ZBA:       # %bb.0:
@@ -1481,6 +1567,12 @@ define signext i32 @addshl32_5_6(i32 signext %a, i32 signext %b) {
 ; RV64I-NEXT:    addw a0, a0, a1
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDE-LABEL: addshl32_5_6:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a1, a0
+; ZBAXSH1ADDE-NEXT:    slliw a0, a0, 5
+; ZBAXSH1ADDE-NEXT:    ret
+;
 ; RV64ZBA-LABEL: addshl32_5_6:
 ; RV64ZBA:       # %bb.0:
 ; RV64ZBA-NEXT:    sh1add a0, a1, a0
@@ -1499,6 +1591,12 @@ define i64 @addshl64_5_6(i64 %a, i64 %b) {
 ; RV64I-NEXT:    slli a1, a1, 6
 ; RV64I-NEXT:    add a0, a0, a1
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH1ADDE-LABEL: addshl64_5_6:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a1, a0
+; ZBAXSH1ADDE-NEXT:    slli a0, a0, 5
+; ZBAXSH1ADDE-NEXT:    ret
 ;
 ; RV64ZBA-LABEL: addshl64_5_6:
 ; RV64ZBA:       # %bb.0:
@@ -1749,6 +1847,13 @@ define signext i16 @sh1adduw_ptrdiff(i64 %diff, ptr %baseptr) {
 ; RV64I-NEXT:    lh a0, 0(a0)
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDUWE-LABEL: sh1adduw_ptrdiff:
+; ZBAXSH1ADDUWE:       # %bb.0:
+; ZBAXSH1ADDUWE-NEXT:    srli a0, a0, 1
+; ZBAXSH1ADDUWE-NEXT:    sh1add.uw a0, a0, a1
+; ZBAXSH1ADDUWE-NEXT:    lh a0, 0(a0)
+; ZBAXSH1ADDUWE-NEXT:    ret
+;
 ; RV64ZBA-LABEL: sh1adduw_ptrdiff:
 ; RV64ZBA:       # %bb.0:
 ; RV64ZBA-NEXT:    srli a0, a0, 1
@@ -1818,6 +1923,13 @@ define signext i16 @srliw_1_sh1add(ptr %0, i32 signext %1) {
 ; RV64I-NEXT:    add a0, a0, a1
 ; RV64I-NEXT:    lh a0, 0(a0)
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH1ADDE-LABEL: srliw_1_sh1add:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    srliw a1, a1, 1
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a1, a0
+; ZBAXSH1ADDE-NEXT:    lh a0, 0(a0)
+; ZBAXSH1ADDE-NEXT:    ret
 ;
 ; RV64ZBA-LABEL: srliw_1_sh1add:
 ; RV64ZBA:       # %bb.0:
@@ -1978,6 +2090,13 @@ define signext i16 @srliw_2_sh1add(ptr %0, i32 signext %1) {
 ; RV64I-NEXT:    lh a0, 0(a0)
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDE-LABEL: srliw_2_sh1add:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    srliw a1, a1, 2
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a1, a0
+; ZBAXSH1ADDE-NEXT:    lh a0, 0(a0)
+; ZBAXSH1ADDE-NEXT:    ret
+;
 ; RV64ZBA-LABEL: srliw_2_sh1add:
 ; RV64ZBA:       # %bb.0:
 ; RV64ZBA-NEXT:    srliw a1, a1, 2
@@ -2087,6 +2206,13 @@ define signext i16 @srli_2_sh1add(ptr %0, i64 %1) {
 ; RV64I-NEXT:    lh a0, 0(a0)
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDE-LABEL: srli_2_sh1add:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    srli a1, a1, 2
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a1, a0
+; ZBAXSH1ADDE-NEXT:    lh a0, 0(a0)
+; ZBAXSH1ADDE-NEXT:    ret
+;
 ; RV64ZBA-LABEL: srli_2_sh1add:
 ; RV64ZBA:       # %bb.0:
 ; RV64ZBA-NEXT:    srli a1, a1, 2
@@ -2149,6 +2275,13 @@ define signext i16 @shl_2_sh1add(ptr %0, i32 signext %1) {
 ; RV64I-NEXT:    add a0, a0, a1
 ; RV64I-NEXT:    lh a0, 0(a0)
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH1ADDUWE-LABEL: shl_2_sh1add:
+; ZBAXSH1ADDUWE:       # %bb.0:
+; ZBAXSH1ADDUWE-NEXT:    slli a1, a1, 2
+; ZBAXSH1ADDUWE-NEXT:    sh1add.uw a0, a1, a0
+; ZBAXSH1ADDUWE-NEXT:    lh a0, 0(a0)
+; ZBAXSH1ADDUWE-NEXT:    ret
 ;
 ; RV64ZBA-LABEL: shl_2_sh1add:
 ; RV64ZBA:       # %bb.0:
@@ -2312,6 +2445,13 @@ define i8 @array_index_sh1_sh0(ptr %p, i64 %idx1, i64 %idx2) {
 ; RV64I-NEXT:    add a0, a0, a1
 ; RV64I-NEXT:    lbu a0, 0(a0)
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH1ADDE-LABEL: array_index_sh1_sh0:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a1, a0
+; ZBAXSH1ADDE-NEXT:    add a0, a0, a2
+; ZBAXSH1ADDE-NEXT:    lbu a0, 0(a0)
+; ZBAXSH1ADDE-NEXT:    ret
 ;
 ; RV64ZBA-LABEL: array_index_sh1_sh0:
 ; RV64ZBA:       # %bb.0:
@@ -2602,6 +2742,14 @@ define i16 @array_index_sh4_sh1(ptr %p, i64 %idx1, i64 %idx2) {
 ; RV64I-NEXT:    lh a0, 0(a0)
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDE-LABEL: array_index_sh4_sh1:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    slli a1, a1, 5
+; ZBAXSH1ADDE-NEXT:    add a0, a0, a1
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a2, a0
+; ZBAXSH1ADDE-NEXT:    lh a0, 0(a0)
+; ZBAXSH1ADDE-NEXT:    ret
+;
 ; RV64ZBA-LABEL: array_index_sh4_sh1:
 ; RV64ZBA:       # %bb.0:
 ; RV64ZBA-NEXT:    slli a1, a1, 5
@@ -2730,6 +2878,12 @@ define i64 @mul_neg3(i64 %a) {
 ; RV64I-NEXT:    sub a0, a0, a1
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDE-LABEL: mul_neg3:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a0
+; ZBAXSH1ADDE-NEXT:    neg a0, a0
+; ZBAXSH1ADDE-NEXT:    ret
+;
 ; RV64ZBA-LABEL: mul_neg3:
 ; RV64ZBA:       # %bb.0:
 ; RV64ZBA-NEXT:    sh1add a0, a0, a0
@@ -2805,6 +2959,14 @@ define i64 @bext_mul12(i32 %1, i32 %2) {
 ; RV64I-NEXT:    slli a0, a0, 4
 ; RV64I-NEXT:    sub a0, a0, a1
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH1ADDE-LABEL: bext_mul12:
+; ZBAXSH1ADDE:       # %bb.0: # %entry
+; ZBAXSH1ADDE-NEXT:    srlw a0, a0, a1
+; ZBAXSH1ADDE-NEXT:    andi a0, a0, 1
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a0
+; ZBAXSH1ADDE-NEXT:    slli a0, a0, 2
+; ZBAXSH1ADDE-NEXT:    ret
 ;
 ; RV64ZBANOZBB-LABEL: bext_mul12:
 ; RV64ZBANOZBB:       # %bb.0: # %entry
