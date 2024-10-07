@@ -726,7 +726,7 @@ foreach i = {1,2,3} in {
   }       
 }
 
-let Predicates = [HasZbaAddUw, IsRV64] in {
+let Predicates = [HasZbaAddUw] in {
 def : Pat<(i64 (add_like_non_imm12 (and GPR:$rs1, 0xFFFFFFFF), GPR:$rs2)),
           (ADD_UW GPR:$rs1, GPR:$rs2)>;
 def : Pat<(i64 (and GPR:$rs, 0xFFFFFFFF)), (ADD_UW GPR:$rs, (XLenVT X0))>;
@@ -857,7 +857,7 @@ def : Pat<(i32 (or (shl GPR:$rs2, (i64 16)), (zexti16i32 (i32 GPR:$rs1)))),
           (PACKW GPR:$rs1, GPR:$rs2)>;
 } // Predicates = [HasStdExtZbkb, IsRV64]
 
-let Predicates = [HasZbaAddUw, IsRV64] in {
+let Predicates = [HasZbaAddUw] in {
   def : Pat<(i64 (add_like_non_imm12 (zext GPR:$rs1), GPR:$rs2)),
             (ADD_UW GPR:$rs1, GPR:$rs2)>;
   def : Pat<(zext GPR:$src), (ADD_UW GPR:$src, (XLenVT X0))>;
@@ -868,7 +868,6 @@ def : Pat<(shl (i64 (zext i32:$rs1)), uimm5:$shamt),
           (SLLI_UW GPR:$rs1, uimm5:$shamt)>;
 }
 
-let Predicates = [HasStdExtZba, IsRV64] in {
 foreach i = {1,2,3} in {
   defvar x = !cond(!eq(i, 1) : HasZbaSh1Add, !eq(i, 2) : HasZbaSh2Add, true : HasZbaSh3Add);
   
@@ -879,7 +878,6 @@ foreach i = {1,2,3} in {
     def : Pat<(i32 (riscv_shl_add GPR:$rs1, (i32 i), GPR:$rs2)),
               (shxadd GPR:$rs1, GPR:$rs2)>;
   }
-}
 }
 
 let Predicates = [HasStdExtZbs, IsRV64] in {

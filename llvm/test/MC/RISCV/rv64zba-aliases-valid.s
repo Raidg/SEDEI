@@ -8,6 +8,17 @@
 # RUN: llvm-mc -filetype=obj -triple riscv64 -mattr=+zba < %s \
 # RUN:     | llvm-objdump --no-print-imm-hex -d -r --mattr=+zba - \
 # RUN:     | FileCheck -check-prefixes=CHECK-S-OBJ %s
+#
+# RUN: llvm-mc %s -triple=riscv64 -mattr=+zbaxadduwe -riscv-no-aliases \
+# RUN:     | FileCheck -check-prefixes=CHECK-ADDUW-NOALIAS %s
+# RUN: llvm-mc %s  -triple=riscv64 -mattr=+zbaxadduwe \
+# RUN:     | FileCheck -check-prefixes=CHECK-ADDUW %s
+# RUN: llvm-mc -filetype=obj -triple riscv64 -mattr=+zbaxadduwe < %s \
+# RUN:     | llvm-objdump --no-print-imm-hex -d -r -M no-aliases --mattr=+zbaxadduwe - \
+# RUN:     | FileCheck -check-prefixes=CHECK-ADDUW-NOALIAS %s
+# RUN: llvm-mc -filetype=obj -triple riscv64 -mattr=+zbaxadduwe < %s \
+# RUN:     | llvm-objdump --no-print-imm-hex -d -r --mattr=+zbaxadduwe - \
+# RUN:     | FileCheck -check-prefixes=CHECK-ADDUW %s
 
 # The following check prefixes are used in this test:
 # CHECK-S-OBJ            Match both the .s and objdumped object output with
@@ -17,6 +28,8 @@
 
 # CHECK-S-OBJ-NOALIAS: add.uw t0, t1, zero
 # CHECK-S-OBJ: zext.w t0, t1
+# CHECK-ADDUW-NOALIAS: add.uw t0, t1, zero
+# CHECK-ADDUW: zext.w t0, t1
 zext.w x5, x6
 
 # CHECK-S-OBJ-NOALIAS: addi t1, zero, -2

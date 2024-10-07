@@ -1808,7 +1808,7 @@ def ADJCALLSTACKUP   : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
 
 /// RV64 patterns
 
-let Predicates = [IsRV64, NotHasStdExtZba] in {
+let Predicates = [IsRV64, NotHasZbaAddUw] in {
 def : Pat<(i64 (and GPR:$rs1, 0xffffffff)), (SRLI (i64 (SLLI GPR:$rs1, 32)), 32)>;
 
 // If we're shifting a 32-bit zero extended value left by 0-31 bits, use 2
@@ -2024,7 +2024,7 @@ def : Pat<(i32 (and GPR:$rs, TrailingOnesMask:$mask)),
 def : Pat<(zext_is_sext GPR:$src), (ADDIW GPR:$src, 0)>;
 }
 
-let Predicates = [IsRV64, NotHasStdExtZba] in {
+let Predicates = [IsRV64, NotHasZbaAddUw] in {
 def : Pat<(zext GPR:$src), (SRLI (i64 (SLLI GPR:$src, 32)), 32)>;
 
 // If we're shifting a 32-bit zero extended value left by 0-31 bits, use 2

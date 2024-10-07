@@ -1309,7 +1309,8 @@ void RISCVDAGToDAGISel::Select(SDNode *Node) {
 
           // (srli (slli x, c3-c2), c3).
           // Skip if we could use (zext.w (sraiw X, C2)).
-          bool Skip = Subtarget->hasStdExtZba() && Leading == 32 &&
+          bool Skip = (Subtarget->hasStdExtZba() || Subtarget->hasEnaZbaAddUw()) && 
+                      Leading == 32 &&
                       X.getOpcode() == ISD::SIGN_EXTEND_INREG &&
                       cast<VTSDNode>(X.getOperand(1))->getVT() == MVT::i32;
           // Also Skip if we can use bexti or th.tst.
@@ -1335,7 +1336,7 @@ void RISCVDAGToDAGISel::Select(SDNode *Node) {
         if (C2 + Leading < XLen &&
             C1 == (maskTrailingOnes<uint64_t>(XLen - (C2 + Leading)) << C2)) {
           // Use slli.uw when possible.
-          if ((XLen - (C2 + Leading)) == 32 && Subtarget->hasStdExtZba()) {
+          if ((XLen - (C2 + Leading)) == 32 && (Subtarget->hasStdExtZba() || Subtarget->hasEnaZbaSlliUw())) {
             SDNode *SLLI_UW =
                 CurDAG->getMachineNode(RISCV::SLLI_UW, DL, VT, X,
                                        CurDAG->getTargetConstant(C2, DL, VT));
@@ -1424,7 +1425,7 @@ void RISCVDAGToDAGISel::Select(SDNode *Node) {
 
         // If we have 32 bits in the mask, we can use SLLI_UW instead of SLLI.
         if (C2 < Trailing && Leading + Trailing == 32 && OneUseOrZExtW &&
-            Subtarget->hasStdExtZba()) {
+            (Subtarget->hasStdExtZba() || Subtarget->hasEnaZbaSlliUw())) {
           SDNode *SRLI = CurDAG->getMachineNode(
               RISCV::SRLI, DL, VT, X,
               CurDAG->getTargetConstant(Trailing - C2, DL, VT));
@@ -1490,7 +1491,8 @@ void RISCVDAGToDAGISel::Select(SDNode *Node) {
       break;
     // If this can be a ZEXT.w, don't do this if the ZEXT has multiple users or
     // the constant is a simm32.
-    bool IsZExtW = C2 == UINT64_C(0xFFFFFFFF) && Subtarget->hasStdExtZba();
+    bool IsZExtW = C2 == UINT64_C(0xFFFFFFFF) && (
+      Subtarget->hasStdExtZba() || Subtarget->hasEnaZbaAddUw());
     // With XTHeadBb, we can use TH.EXTU.
     IsZExtW |= C2 == UINT64_C(0xFFFFFFFF) && Subtarget->hasVendorXTHeadBb();
     if (IsZExtW && (isInt<32>(N1C->getSExtValue()) || !N0.hasOneUse()))

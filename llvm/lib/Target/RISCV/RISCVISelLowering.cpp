@@ -3947,7 +3947,7 @@ static SDValue lowerBuildVectorViaPacking(SDValue Op, SelectionDAG &DAG,
 
   // TODO: Relax these architectural restrictions, possibly with costing
   // of the actual instructions required.
-  if (!Subtarget.hasStdExtZbb() || !Subtarget.hasStdExtZba())
+  if (!Subtarget.hasStdExtZbb() || (!Subtarget.hasStdExtZba() && !Subtarget.hasEnaZbaAddUw()))
     return SDValue();
 
   unsigned NumElts = VT.getVectorNumElements();
@@ -21300,7 +21300,7 @@ bool RISCVTargetLowering::decomposeMulByConstant(LLVMContext &Context, EVT VT,
       return true;
 
     // Optimize the MUL to (SH*ADD x, (SLLI x, bits)) if Imm is not simm12.
-    if (Subtarget.hasStdExtZba() && !Imm.isSignedIntN(12) &&
+    if ((Subtarget.hasStdExtZba()) && !Imm.isSignedIntN(12) &&
         ((Imm - 2).isPowerOf2() || (Imm - 4).isPowerOf2() ||
          (Imm - 8).isPowerOf2()))
       return true;
