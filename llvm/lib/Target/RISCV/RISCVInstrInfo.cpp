@@ -3663,7 +3663,7 @@ void RISCVInstrInfo::mulImm(MachineFunction &MF, MachineBasicBlock &MBB,
         .addReg(DestReg, RegState::Kill)
         .addImm(ShiftAmount)
         .setMIFlag(Flag);
-  } else if (STI.hasStdExtZba() &&
+  } else if ((STI.hasStdExtZba() || STI.hasEnaZbaSh1Add()) &&
              ((Amount % 3 == 0 && isPowerOf2_64(Amount / 3)) ||
               (Amount % 5 == 0 && isPowerOf2_64(Amount / 5)) ||
               (Amount % 9 == 0 && isPowerOf2_64(Amount / 9)))) {

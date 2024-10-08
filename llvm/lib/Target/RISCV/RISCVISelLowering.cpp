@@ -13120,7 +13120,7 @@ static SDValue combineBinOpToReduce(SDNode *N, SelectionDAG &DAG,
 static SDValue transformAddShlImm(SDNode *N, SelectionDAG &DAG,
                                   const RISCVSubtarget &Subtarget) {
   // Perform this optimization only in the zba extension.
-  if (!Subtarget.hasStdExtZba())
+  if (!Subtarget.hasStdExtZba() && !Subtarget.hasEnaZbaSh1Add() && Subtarget.hasEnaZbaSh2Add())
     return SDValue();
 
   // Skip for vector types and larger types.
@@ -13144,11 +13144,18 @@ static SDValue transformAddShlImm(SDNode *N, SelectionDAG &DAG,
   int64_t C1 = N1C->getSExtValue();
   if (C0 <= 0 || C1 <= 0)
     return SDValue();
-
+  
   // Skip if SH1ADD/SH2ADD/SH3ADD are not applicable.
   int64_t Bits = std::min(C0, C1);
   int64_t Diff = std::abs(C0 - C1);
   if (Diff != 1 && Diff != 2 && Diff != 3)
+    return SDValue();
+
+  if ((
+    ((Diff == 1) && !Subtarget.hasEnaZbaSh1Add()) || 
+    ((Diff == 2) && !Subtarget.hasEnaZbaSh2Add()) || 
+    ((Diff == 3) && !Subtarget.hasEnaZbaSh3Add())) &&
+    !Subtarget.hasStdExtZba())
     return SDValue();
 
   // Build nodes.
@@ -13157,6 +13164,7 @@ static SDValue transformAddShlImm(SDNode *N, SelectionDAG &DAG,
   SDValue NL = (C0 > C1) ? N0->getOperand(0) : N1->getOperand(0);
   SDValue SHADD = DAG.getNode(RISCVISD::SHL_ADD, DL, VT, NL,
                               DAG.getConstant(Diff, DL, VT), NS);
+                              
   return DAG.getNode(ISD::SHL, DL, VT, SHADD, DAG.getConstant(Bits, DL, VT));
 }
 
@@ -13850,7 +13858,7 @@ static SDValue expandMul(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   const bool HasShlAdd =
-      Subtarget.hasStdExtZba() || Subtarget.hasVendorXTHeadBa();
+      Subtarget.hasStdExtZba() || Subtarget.hasVendorXTHeadBa() || Subtarget.hasEnaZbaSh1Add() || Subtarget.hasEnaZbaSh2Add();
 
   ConstantSDNode *CNode = dyn_cast<ConstantSDNode>(N->getOperand(1));
   if (!CNode)
@@ -13868,14 +13876,23 @@ static SDValue expandMul(SDNode *N, SelectionDAG &DAG,
       if (MulAmt % Divisor != 0)
         continue;
       uint64_t MulAmt2 = MulAmt / Divisor;
+      
       // 3/5/9 * 2^N ->  shl (shXadd X, X), N
       if (isPowerOf2_64(MulAmt2)) {
+        if (!(
+          ((Log2_64(Divisor - 1) == 1) && Subtarget.hasEnaZbaSh1Add()) ||
+          ((Log2_64(Divisor - 1) == 2) && Subtarget.hasEnaZbaSh2Add()) ||
+          ((Log2_64(Divisor - 1) == 3) && Subtarget.hasEnaZbaSh3Add()) ||
+          Subtarget.hasStdExtZba() || Subtarget.hasVendorXTHeadBa()
+        )) continue;
+
         SDLoc DL(N);
         SDValue X = N->getOperand(0);
         // Put the shift first if we can fold a zext into the
         // shift forming a slli.uw.
-        if (X.getOpcode() == ISD::AND && isa<ConstantSDNode>(X.getOperand(1)) &&
-            X.getConstantOperandVal(1) == UINT64_C(0xffffffff)) {
+        if ((X.getOpcode() == ISD::AND && isa<ConstantSDNode>(X.getOperand(1)) &&
+            X.getConstantOperandVal(1) == UINT64_C(0xffffffff)) &&
+            (Subtarget.hasEnaZbaSlliUw() || Subtarget.hasStdExtZba())) {
           SDValue Shl = DAG.getNode(ISD::SHL, DL, VT, X,
                                     DAG.getConstant(Log2_64(MulAmt2), DL, VT));
           return DAG.getNode(RISCVISD::SHL_ADD, DL, VT, Shl,
@@ -13893,6 +13910,12 @@ static SDValue expandMul(SDNode *N, SelectionDAG &DAG,
 
       // 3/5/9 * 3/5/9 -> shXadd (shYadd X, X), (shYadd X, X)
       if (MulAmt2 == 3 || MulAmt2 == 5 || MulAmt2 == 9) {
+        if (!(
+/*           (((Log2_64(Divisor - 1) == 1) || (Log2_64(MulAmt2 - 1) == 1)) && Subtarget.hasEnaZbaSh1Add()) ||
+          (((Log2_64(Divisor - 1) == 2) || (Log2_64(MulAmt2 - 1) == 2)) && Subtarget.hasEnaZbaSh2Add()) ||
+          (((Log2_64(Divisor - 1) == 3) || (Log2_64(MulAmt2 - 1) == 3)) && Subtarget.hasEnaZbaSh3Add()) || */
+          Subtarget.hasStdExtZba() || Subtarget.hasVendorXTHeadBa()
+        )) continue;
         SDLoc DL(N);
         SDValue Mul359 =
             DAG.getNode(RISCVISD::SHL_ADD, DL, VT, X,
@@ -13908,13 +13931,21 @@ static SDValue expandMul(SDNode *N, SelectionDAG &DAG,
     // easy. Then count how many zeros are up to the first bit.
     if (isPowerOf2_64(MulAmt & (MulAmt - 1))) {
       unsigned ScaleShift = llvm::countr_zero(MulAmt);
-      if (ScaleShift >= 1 && ScaleShift < 4) {
-        unsigned ShiftAmt = Log2_64((MulAmt & (MulAmt - 1)));
-        SDLoc DL(N);
-        SDValue Shift1 =
-            DAG.getNode(ISD::SHL, DL, VT, X, DAG.getConstant(ShiftAmt, DL, VT));
-        return DAG.getNode(RISCVISD::SHL_ADD, DL, VT, X,
-                           DAG.getConstant(ScaleShift, DL, VT), Shift1);
+
+      if ((
+        ((ScaleShift == 1) && Subtarget.hasEnaZbaSh1Add()) ||
+        ((ScaleShift == 2) && Subtarget.hasEnaZbaSh2Add()) ||
+        ((ScaleShift == 3) && Subtarget.hasEnaZbaSh3Add()) ||
+        Subtarget.hasStdExtZba() || Subtarget.hasVendorXTHeadBa()
+      )) {
+        if (ScaleShift >= 1 && ScaleShift < 4) {
+          unsigned ShiftAmt = Log2_64((MulAmt & (MulAmt - 1)));
+          SDLoc DL(N);
+          SDValue Shift1 =
+              DAG.getNode(ISD::SHL, DL, VT, X, DAG.getConstant(ShiftAmt, DL, VT));
+          return DAG.getNode(RISCVISD::SHL_ADD, DL, VT, X,
+                            DAG.getConstant(ScaleShift, DL, VT), Shift1);
+        }
       }
     }
 
@@ -13928,6 +13959,17 @@ static SDValue expandMul(SDNode *N, SelectionDAG &DAG,
       if (C <= Divisor)
         continue;
       unsigned TZ = llvm::countr_zero(C);
+
+      if (!(
+/*         ((Log2_64(Divisor - 1) == 1) && Subtarget.hasEnaZbaSh1Add()) ||
+        ((TZ == 2) && Subtarget.hasEnaZbaSh1Add()) ||
+        ((Log2_64(Divisor - 1) == 2) && Subtarget.hasEnaZbaSh2Add()) ||
+        ((TZ == 2) && Subtarget.hasEnaZbaSh2Add()) ||
+        ((Log2_64(Divisor - 1) == 3) && Subtarget.hasEnaZbaSh3Add()) ||
+        ((TZ == 3) && Subtarget.hasEnaZbaSh3Add()) || */
+        Subtarget.hasStdExtZba() || Subtarget.hasVendorXTHeadBa()
+      )) continue;
+
       if ((C >> TZ) == Divisor && (TZ == 1 || TZ == 2 || TZ == 3)) {
         SDLoc DL(N);
         SDValue Mul359 =
@@ -13941,20 +13983,35 @@ static SDValue expandMul(SDNode *N, SelectionDAG &DAG,
     // 2^n + 2/4/8 + 1 -> (add (shl X, C1), (shXadd X, X))
     if (MulAmt > 2 && isPowerOf2_64((MulAmt - 1) & (MulAmt - 2))) {
       unsigned ScaleShift = llvm::countr_zero(MulAmt - 1);
-      if (ScaleShift >= 1 && ScaleShift < 4) {
-        unsigned ShiftAmt = Log2_64(((MulAmt - 1) & (MulAmt - 2)));
-        SDLoc DL(N);
-        SDValue Shift1 =
-            DAG.getNode(ISD::SHL, DL, VT, X, DAG.getConstant(ShiftAmt, DL, VT));
-        return DAG.getNode(ISD::ADD, DL, VT, Shift1,
-                           DAG.getNode(RISCVISD::SHL_ADD, DL, VT, X,
-                                       DAG.getConstant(ScaleShift, DL, VT), X));
+
+      if ((
+        ((ScaleShift == 1) && Subtarget.hasEnaZbaSh1Add()) ||
+        ((ScaleShift == 2) && Subtarget.hasEnaZbaSh2Add()) ||
+        ((ScaleShift == 3) && Subtarget.hasEnaZbaSh3Add()) ||
+        Subtarget.hasStdExtZba() || Subtarget.hasVendorXTHeadBa()
+      )) {
+        if (ScaleShift >= 1 && ScaleShift < 4) {
+          unsigned ShiftAmt = Log2_64(((MulAmt - 1) & (MulAmt - 2)));
+          SDLoc DL(N);
+          SDValue Shift1 =
+              DAG.getNode(ISD::SHL, DL, VT, X, DAG.getConstant(ShiftAmt, DL, VT));
+          return DAG.getNode(ISD::ADD, DL, VT, Shift1,
+                            DAG.getNode(RISCVISD::SHL_ADD, DL, VT, X,
+                                        DAG.getConstant(ScaleShift, DL, VT), X));
+        }
       }
     }
 
     // 2^N - 3/5/9 --> (sub (shl X, C1), (shXadd X, x))
     for (uint64_t Offset : {3, 5, 9}) {
       if (isPowerOf2_64(MulAmt + Offset)) {
+        if (!(
+          ((Log2_64(Offset - 1) == 1) && Subtarget.hasEnaZbaSh1Add()) ||
+          ((Log2_64(Offset - 1) == 2) && Subtarget.hasEnaZbaSh2Add()) ||
+          ((Log2_64(Offset - 1) == 3) && Subtarget.hasEnaZbaSh3Add()) ||
+          Subtarget.hasStdExtZba() || Subtarget.hasVendorXTHeadBa()
+        )) continue;
+
         SDLoc DL(N);
         SDValue Shift1 =
             DAG.getNode(ISD::SHL, DL, VT, X,
@@ -21300,7 +21357,7 @@ bool RISCVTargetLowering::decomposeMulByConstant(LLVMContext &Context, EVT VT,
       return true;
 
     // Optimize the MUL to (SH*ADD x, (SLLI x, bits)) if Imm is not simm12.
-    if ((Subtarget.hasStdExtZba()) && !Imm.isSignedIntN(12) &&
+    if ((Subtarget.hasStdExtZba() || Subtarget.hasEnaZbaSh1Add() || Subtarget.hasEnaZbaSh2Add()) && !Imm.isSignedIntN(12) &&
         ((Imm - 2).isPowerOf2() || (Imm - 4).isPowerOf2() ||
          (Imm - 8).isPowerOf2()))
       return true;

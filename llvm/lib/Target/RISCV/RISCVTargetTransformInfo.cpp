@@ -185,7 +185,7 @@ InstructionCost RISCVTTIImpl::getIntImmCostInst(unsigned Opcode, unsigned Idx,
     if (Imm == UINT64_C(0xffff) && ST->hasStdExtZbb())
       return TTI::TCC_Free;
     // zext.w
-    if (Imm == UINT64_C(0xffffffff) && (ST->hasStdExtZba() || ST->hasEnaZbaAddUw()))
+    if (Imm == UINT64_C(0xffffffff) && (ST->hasStdExtZba() || ST->hasEnaZbaAddUw() || ST->hasEnaZbaSh1Add()))
       return TTI::TCC_Free;
     // bclri
     if (ST->hasStdExtZbs() && (~Imm).isPowerOf2())
