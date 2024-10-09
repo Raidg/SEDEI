@@ -3947,7 +3947,7 @@ static SDValue lowerBuildVectorViaPacking(SDValue Op, SelectionDAG &DAG,
 
   // TODO: Relax these architectural restrictions, possibly with costing
   // of the actual instructions required.
-  if (!Subtarget.hasStdExtZbb() || (!Subtarget.hasStdExtZba() && !Subtarget.hasEnaZbaAddUw()))
+  if (!Subtarget.hasStdExtZbb() || (!Subtarget.hasStdExtZba() && !Subtarget.hasEnaZbaAddUw() && !Subtarget.hasEnaZbaSh1Add() && Subtarget.hasEnaZbaSh2Add()))
     return SDValue();
 
   unsigned NumElts = VT.getVectorNumElements();
@@ -13120,7 +13120,7 @@ static SDValue combineBinOpToReduce(SDNode *N, SelectionDAG &DAG,
 static SDValue transformAddShlImm(SDNode *N, SelectionDAG &DAG,
                                   const RISCVSubtarget &Subtarget) {
   // Perform this optimization only in the zba extension.
-  if (!Subtarget.hasStdExtZba() && !Subtarget.hasEnaZbaSh1Add() && Subtarget.hasEnaZbaSh2Add())
+  if (!Subtarget.hasStdExtZba() && !Subtarget.hasEnaZbaSh1Add() && !Subtarget.hasEnaZbaSh2Add())
     return SDValue();
 
   // Skip for vector types and larger types.
@@ -13910,11 +13910,16 @@ static SDValue expandMul(SDNode *N, SelectionDAG &DAG,
 
       // 3/5/9 * 3/5/9 -> shXadd (shYadd X, X), (shYadd X, X)
       if (MulAmt2 == 3 || MulAmt2 == 5 || MulAmt2 == 9) {
-        if (!(
-/*           (((Log2_64(Divisor - 1) == 1) || (Log2_64(MulAmt2 - 1) == 1)) && Subtarget.hasEnaZbaSh1Add()) ||
-          (((Log2_64(Divisor - 1) == 2) || (Log2_64(MulAmt2 - 1) == 2)) && Subtarget.hasEnaZbaSh2Add()) ||
-          (((Log2_64(Divisor - 1) == 3) || (Log2_64(MulAmt2 - 1) == 3)) && Subtarget.hasEnaZbaSh3Add()) || */
-          Subtarget.hasStdExtZba() || Subtarget.hasVendorXTHeadBa()
+        if (!((
+          ((((Log2_64(Divisor - 1) == 1) || (Log2_64(MulAmt2 - 1) == 1)) && Subtarget.hasEnaZbaSh1Add()) ||
+          !((Log2_64(Divisor - 1) == 1) || (Log2_64(MulAmt2 - 1) == 1))
+          ) &&
+          ((((Log2_64(Divisor - 1) == 2) || (Log2_64(MulAmt2 - 1) == 2)) && Subtarget.hasEnaZbaSh2Add()) ||
+          !((Log2_64(Divisor - 1) == 2) || (Log2_64(MulAmt2 - 1) == 2)) 
+          ) &&
+          ((((Log2_64(Divisor - 1) == 3) || (Log2_64(MulAmt2 - 1) == 3)) && Subtarget.hasEnaZbaSh3Add()) || 
+          !((Log2_64(Divisor - 1) == 3) || (Log2_64(MulAmt2 - 1) == 3)))
+          ) || Subtarget.hasStdExtZba() || Subtarget.hasVendorXTHeadBa()
         )) continue;
         SDLoc DL(N);
         SDValue Mul359 =
@@ -13960,14 +13965,16 @@ static SDValue expandMul(SDNode *N, SelectionDAG &DAG,
         continue;
       unsigned TZ = llvm::countr_zero(C);
 
-      if (!(
-/*         ((Log2_64(Divisor - 1) == 1) && Subtarget.hasEnaZbaSh1Add()) ||
-        ((TZ == 2) && Subtarget.hasEnaZbaSh1Add()) ||
-        ((Log2_64(Divisor - 1) == 2) && Subtarget.hasEnaZbaSh2Add()) ||
-        ((TZ == 2) && Subtarget.hasEnaZbaSh2Add()) ||
-        ((Log2_64(Divisor - 1) == 3) && Subtarget.hasEnaZbaSh3Add()) ||
-        ((TZ == 3) && Subtarget.hasEnaZbaSh3Add()) || */
-        Subtarget.hasStdExtZba() || Subtarget.hasVendorXTHeadBa()
+      if (!((
+        ((((Log2_64(Divisor - 1) == 1) || (TZ == 1)) && Subtarget.hasEnaZbaSh1Add()) ||
+        !((Log2_64(Divisor - 1) == 1) || (TZ == 1))
+        ) &&
+        ((((Log2_64(Divisor - 1) == 2) || (TZ == 2)) && Subtarget.hasEnaZbaSh2Add()) ||
+        !((Log2_64(Divisor - 1) == 2) || (TZ == 2)) 
+        ) &&
+        ((((Log2_64(Divisor - 1) == 3) || (TZ == 3)) && Subtarget.hasEnaZbaSh3Add()) || 
+        !((Log2_64(Divisor - 1) == 3) || (TZ == 3)))
+        ) || Subtarget.hasStdExtZba() || Subtarget.hasVendorXTHeadBa()
       )) continue;
 
       if ((C >> TZ) == Divisor && (TZ == 1 || TZ == 2 || TZ == 3)) {
