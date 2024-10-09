@@ -3947,7 +3947,7 @@ static SDValue lowerBuildVectorViaPacking(SDValue Op, SelectionDAG &DAG,
 
   // TODO: Relax these architectural restrictions, possibly with costing
   // of the actual instructions required.
-  if (!Subtarget.hasStdExtZbb() || (!Subtarget.hasStdExtZba() && !Subtarget.hasEnaZbaAddUw() && !Subtarget.hasEnaZbaSh1Add() && Subtarget.hasEnaZbaSh2Add()))
+  if (!Subtarget.hasStdExtZbb() || (!Subtarget.hasStdExtZba() && !Subtarget.hasEnaZbaAddUw() && !Subtarget.hasEnaZbaSh1Add() && !Subtarget.hasEnaZbaSh2Add() && !Subtarget.hasEnaZbaSh3Add()))
     return SDValue();
 
   unsigned NumElts = VT.getVectorNumElements();
@@ -13120,7 +13120,7 @@ static SDValue combineBinOpToReduce(SDNode *N, SelectionDAG &DAG,
 static SDValue transformAddShlImm(SDNode *N, SelectionDAG &DAG,
                                   const RISCVSubtarget &Subtarget) {
   // Perform this optimization only in the zba extension.
-  if (!Subtarget.hasStdExtZba() && !Subtarget.hasEnaZbaSh1Add() && !Subtarget.hasEnaZbaSh2Add())
+  if (!Subtarget.hasStdExtZba() && !Subtarget.hasEnaZbaSh1Add() && !Subtarget.hasEnaZbaSh2Add() && !Subtarget.hasEnaZbaSh3Add())
     return SDValue();
 
   // Skip for vector types and larger types.
@@ -13858,7 +13858,7 @@ static SDValue expandMul(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   const bool HasShlAdd =
-      Subtarget.hasStdExtZba() || Subtarget.hasVendorXTHeadBa() || Subtarget.hasEnaZbaSh1Add() || Subtarget.hasEnaZbaSh2Add();
+      Subtarget.hasStdExtZba() || Subtarget.hasVendorXTHeadBa() || Subtarget.hasEnaZbaSh1Add() || Subtarget.hasEnaZbaSh2Add() || Subtarget.hasEnaZbaSh3Add();
 
   ConstantSDNode *CNode = dyn_cast<ConstantSDNode>(N->getOperand(1));
   if (!CNode)
@@ -21364,7 +21364,7 @@ bool RISCVTargetLowering::decomposeMulByConstant(LLVMContext &Context, EVT VT,
       return true;
 
     // Optimize the MUL to (SH*ADD x, (SLLI x, bits)) if Imm is not simm12.
-    if ((Subtarget.hasStdExtZba() || Subtarget.hasEnaZbaSh1Add() || Subtarget.hasEnaZbaSh2Add()) && !Imm.isSignedIntN(12) &&
+    if ((Subtarget.hasStdExtZba() || Subtarget.hasEnaZbaSh1Add() || Subtarget.hasEnaZbaSh2Add() || Subtarget.hasEnaZbaSh3Add()) && !Imm.isSignedIntN(12) &&
         ((Imm - 2).isPowerOf2() || (Imm - 4).isPowerOf2() ||
          (Imm - 8).isPowerOf2()))
       return true;

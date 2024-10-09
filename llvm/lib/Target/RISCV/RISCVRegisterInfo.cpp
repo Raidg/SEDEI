@@ -208,7 +208,7 @@ void RISCVRegisterInfo::adjustReg(MachineBasicBlock &MBB,
     BuildMI(MBB, II, DL, TII->get(RISCV::PseudoReadVLENB), ScratchReg)
         .setMIFlag(Flag);
 
-    if (ScalableAdjOpc == RISCV::ADD && (ST.hasStdExtZba() || ST.hasEnaZbaSh1Add() || ST.hasEnaZbaSh2Add()) &&
+    if (ScalableAdjOpc == RISCV::ADD && (ST.hasStdExtZba() || ST.hasEnaZbaSh1Add() || ST.hasEnaZbaSh2Add() || ST.hasEnaZbaSh3Add()) &&
         (NumOfVReg == 2 || NumOfVReg == 4 || NumOfVReg == 8)) {
       unsigned Opc = NumOfVReg == 2 ? RISCV::SH1ADD :
         (NumOfVReg == 4 ? RISCV::SH2ADD : RISCV::SH3ADD);
@@ -266,7 +266,7 @@ void RISCVRegisterInfo::adjustReg(MachineBasicBlock &MBB,
   // path.  We avoid anything which can be done with a single lui as it might
   // be compressible.  Note that the sh1add case is fully covered by the 2x addi
   // case just above and is thus ommitted.
-  if ((ST.hasStdExtZba() || ST.hasEnaZbaAddUw() || ST.hasEnaZbaSh1Add() || ST.hasEnaZbaSh2Add()) && (Val & 0xFFF) != 0) {
+  if ((ST.hasStdExtZba() || ST.hasEnaZbaSh1Add() || ST.hasEnaZbaSh2Add() || ST.hasEnaZbaSh3Add()) && (Val & 0xFFF) != 0) {
     unsigned Opc = 0;
     if (isShiftedInt<12, 3>(Val)) {
       Opc = RISCV::SH3ADD;
