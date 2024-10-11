@@ -726,6 +726,13 @@ foreach i = {1,2,3} in {
   }       
 }
 
+let Predicates = [HasZbaSh2Add] in {
+  defvar i = 2;
+  defvar shxadd_uw = !cast<Instruction>("SH"#i#"ADD_UW");
+  def : Pat<(i64 (riscv_shl_add (and GPR:$rs1, 0xFFFFFFFF), (i64 i), GPR:$rs2)),
+            (shxadd_uw GPR:$rs1, GPR:$rs2)>;        
+}
+
 let Predicates = [HasZbaAddUw] in {
 def : Pat<(i64 (add_like_non_imm12 (and GPR:$rs1, 0xFFFFFFFF), GPR:$rs2)),
           (ADD_UW GPR:$rs1, GPR:$rs2)>;

@@ -449,7 +449,16 @@ def FeatureStdExtZba
 def HasStdExtZba : Predicate<"Subtarget->hasStdExtZba()">,
                    AssemblerPredicate<(all_of FeatureStdExtZba),
                                       "'Zba' (Address Generation Instructions)">;
-def NotHasStdExtZba : Predicate<"!Subtarget->hasStdExtZba()">;
+def NotHasStdExtZba : Predicate<!strconcat(
+    "!Subtarget->hasStdExtZba() && ",
+    "!(Subtarget->hasEnaZbaAddUw() || ",
+    "Subtarget->hasEnaZbaSh1Add() || ",
+    "Subtarget->hasEnaZbaSh2Add() || ",
+    "Subtarget->hasEnaZbaSh3Add() || ",
+    "Subtarget->hasEnaZbaSh1AddUw() || ",
+    "Subtarget->hasEnaZbaSh2AddUw() || ",
+    "Subtarget->hasEnaZbaSh3AddUw() || ",
+    "Subtarget->hasEnaZbaSlliUw())")>;
 
 def FeatureStdExtZbb
     : RISCVExtension<"zbb", 1, 0,

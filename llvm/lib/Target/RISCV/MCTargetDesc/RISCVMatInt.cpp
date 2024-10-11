@@ -124,7 +124,7 @@ static void generateInstSeqImpl(int64_t Val, const MCSubtargetInfo &STI,
         ShiftAmount -= 12;
         Val = (uint64_t)Val << 12;
       } else if (isUInt<32>((uint64_t)Val << 12) &&
-                 STI.hasFeature(RISCV::FeatureStdExtZba)) {
+                 (STI.hasFeature(RISCV::FeatureStdExtZba))) {
         // Reduce the shift amount and add zeros to the LSBs so it will match
         // LUI, then shift left with SLLI.UW to clear the upper 32 set bits.
         ShiftAmount -= 12;
@@ -208,7 +208,7 @@ static void generateInstSeqLeadingZeros(int64_t Val, const MCSubtargetInfo &STI,
 
   // If we have exactly 32 leading zeros and Zba, we can try using zext.w at
   // the end of the sequence.
-  if (LeadingZeros == 32 && STI.hasFeature(RISCV::FeatureStdExtZba)) {
+  if (LeadingZeros == 32 && (STI.hasFeature(RISCV::FeatureStdExtZba) || STI.hasFeature(RISCV::FeatureEnaZbaAddUw))) {
     // Try replacing upper bits with 1.
     uint64_t LeadingOnesVal = Val | maskLeadingOnes<uint64_t>(LeadingZeros);
     TmpSeq.clear();
@@ -489,7 +489,7 @@ InstSeq generateTwoRegInstSeq(int64_t Val, const MCSubtargetInfo &STI,
     return RISCVMatInt::generateInstSeq(LoVal, STI);
 
   // If we have Zba, we can use (ADD_UW X, (SLLI X, 32)).
-  if (STI.hasFeature(RISCV::FeatureStdExtZba) && Lo_32(Val) == Hi_32(Val)) {
+  if ((STI.hasFeature(RISCV::FeatureStdExtZba) || STI.hasFeature(RISCV::FeatureEnaZbaAddUw)) && Lo_32(Val) == Hi_32(Val)) {
     ShiftAmt = 32;
     AddOpc = RISCV::ADD_UW;
     return RISCVMatInt::generateInstSeq(LoVal, STI);
