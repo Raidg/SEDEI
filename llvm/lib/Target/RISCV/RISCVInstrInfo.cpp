@@ -2264,7 +2264,9 @@ static void
 genShXAddAddShift(MachineInstr &Root, unsigned AddOpIdx,
                   SmallVectorImpl<MachineInstr *> &InsInstrs,
                   SmallVectorImpl<MachineInstr *> &DelInstrs,
-                  DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) {
+                  DenseMap<unsigned, unsigned> &InstrIdxForVirtReg,
+                  const RISCVSubtarget &STI) {
+
   MachineFunction *MF = Root.getMF();
   MachineRegisterInfo &MRI = MF->getRegInfo();
   const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
@@ -2287,13 +2289,25 @@ genShXAddAddShift(MachineInstr &Root, unsigned AddOpIdx,
     InnerOpc = RISCV::ADD;
     break;
   case 1:
-    InnerOpc = RISCV::SH1ADD;
+    if (STI.hasStdExtZba() || STI.hasEnaZbaSh1Add()) {
+      InnerOpc = RISCV::SH1ADD;
+    } else {
+      return;
+    }
     break;
   case 2:
-    InnerOpc = RISCV::SH2ADD;
+    if (STI.hasStdExtZba() || STI.hasEnaZbaSh2Add()) {
+      InnerOpc = RISCV::SH2ADD;
+    } else {
+      return;
+    }
     break;
   case 3:
-    InnerOpc = RISCV::SH3ADD;
+    if (STI.hasStdExtZba() || STI.hasEnaZbaSh3Add()) {
+      InnerOpc = RISCV::SH3ADD;
+    } else {
+      return;
+    }
     break;
   }
 
@@ -2343,10 +2357,10 @@ void RISCVInstrInfo::genAlternativeCodeSequence(
     return;
   }
   case RISCVMachineCombinerPattern::SHXADD_ADD_SLLI_OP1:
-    genShXAddAddShift(Root, 1, InsInstrs, DelInstrs, InstrIdxForVirtReg);
+    genShXAddAddShift(Root, 1, InsInstrs, DelInstrs, InstrIdxForVirtReg, STI);
     return;
   case RISCVMachineCombinerPattern::SHXADD_ADD_SLLI_OP2:
-    genShXAddAddShift(Root, 2, InsInstrs, DelInstrs, InstrIdxForVirtReg);
+    genShXAddAddShift(Root, 2, InsInstrs, DelInstrs, InstrIdxForVirtReg, STI);
     return;
   }
 }
@@ -3664,9 +3678,9 @@ void RISCVInstrInfo::mulImm(MachineFunction &MF, MachineBasicBlock &MBB,
         .addImm(ShiftAmount)
         .setMIFlag(Flag);
   } else if ((STI.hasStdExtZba() || STI.hasEnaZbaSh1Add() || STI.hasEnaZbaSh2Add() || STI.hasEnaZbaSh3Add()) &&
-             ((Amount % 3 == 0 && isPowerOf2_64(Amount / 3)) ||
-              (Amount % 5 == 0 && isPowerOf2_64(Amount / 5)) ||
-              (Amount % 9 == 0 && isPowerOf2_64(Amount / 9)))) {
+             (((Amount % 3 == 0 && isPowerOf2_64(Amount / 3)) && (STI.hasStdExtZba() || STI.hasEnaZbaSh3Add())) ||
+              ((Amount % 5 == 0 && isPowerOf2_64(Amount / 5)) && (STI.hasStdExtZba() || STI.hasEnaZbaSh2Add())) ||
+              ((Amount % 9 == 0 && isPowerOf2_64(Amount / 9)) && (STI.hasStdExtZba() || STI.hasEnaZbaSh1Add())))) {
     // We can use Zba SHXADD+SLLI instructions for multiply in some cases.
     unsigned Opc;
     uint32_t ShiftAmount;
