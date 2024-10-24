@@ -4,13 +4,13 @@
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zba -verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s -check-prefixes=CHECK,RV64ZBA,RV64ZBANOZBB
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zbaxsh1adde -verify-machineinstrs < %s \
-; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSH1ADDE 
+; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSH1ADDE -dump-input-filter=all -vv -color
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zbaxsh1adduwe -verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSH1ADDUWE
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zbaxsh2adde -verify-machineinstrs < %s \
-; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSH2ADDE
+; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSH2ADDE -dump-input-filter=all -vv -color
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zbaxsh2adduwe -verify-machineinstrs < %s \
-; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSH2ADDUWE
+; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSH2ADDUWE 
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zbaxsh3adde -verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSH3ADDE -dump-input-filter=all -vv -color
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zbaxsh3adduwe -verify-machineinstrs < %s \
@@ -18,7 +18,7 @@
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zbaxadduwe -verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXADDUWE
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zbaxslliuwe -verify-machineinstrs < %s \
-; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSLLIUWE
+; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSLLIUWE -dump-input-filter=all -vv -color
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zbaxadduwe -verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXADDUWE
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zbaxsh1adde,+zbaxsh2adde -verify-machineinstrs < %s \
@@ -33,6 +33,8 @@
 ; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSH2ADDSLLIUW
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zbaxsh3adde,+zbaxslliuwe -verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSH3ADDSLLIUW
+; RUN: llc -mtriple=riscv64 -mattr=+m,+zbaxsh2adde,+zbaxsh2adduwe,+zbaxslliuwe -verify-machineinstrs < %s \
+; RUN:   | FileCheck %s -check-prefixes=CHECK,ZBAXSH2ADDUWSLLIUW
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zba,+zbb -verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s -check-prefixes=CHECK,RV64ZBA,RV64ZBAZBB,RV64ZBAZBBNOZBS
 ; RUN: llc -mtriple=riscv64 -mattr=+m,+zba,+zbb,+zbs -verify-machineinstrs < %s \
@@ -760,6 +762,20 @@ define i64 @addmul36(i64 %a, i64 %b) {
 ; RV64I-NEXT:    add a0, a0, a1
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH2ADDE-LABEL: addmul36:
+; ZBAXSH2ADDE:       # %bb.0:
+; ZBAXSH2ADDE-NEXT:    slli a2, a0, 5 
+; ZBAXSH2ADDE-NEXT:    sh2add a0, a0, a2 
+; ZBAXSH2ADDE-NEXT:    add a0, a0, a1
+; ZBAXSH2ADDE-NEXT:    ret
+;
+; ZBAXSH3ADDE-LABEL: addmul36:
+; ZBAXSH3ADDE:       # %bb.0:
+; ZBAXSH3ADDE-NEXT:    sh3add a0, a0, a0
+; ZBAXSH3ADDE-NEXT:    slli a0, a0, 2
+; ZBAXSH3ADDE-NEXT:    add a0, a0, a1
+; ZBAXSH3ADDE-NEXT:    ret
+;
 ; ZBAXSH2ADDSH3ADD-LABEL: addmul36:
 ; ZBAXSH2ADDSH3ADD:       # %bb.0:
 ; ZBAXSH2ADDSH3ADD-NEXT:    sh3add a0, a0, a0
@@ -783,6 +799,20 @@ define i64 @addmul40(i64 %a, i64 %b) {
 ; RV64I-NEXT:    mul a0, a0, a2
 ; RV64I-NEXT:    add a0, a0, a1
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH2ADDE-LABEL: addmul40:
+; ZBAXSH2ADDE:       # %bb.0:
+; ZBAXSH2ADDE-NEXT:    sh2add a0, a0, a0
+; ZBAXSH2ADDE-NEXT:    slli a0, a0, 3
+; ZBAXSH2ADDE-NEXT:    add a0, a0, a1
+; ZBAXSH2ADDE-NEXT:    ret
+;
+; ZBAXSH3ADDE-LABEL: addmul40:
+; ZBAXSH3ADDE:       # %bb.0:
+; ZBAXSH3ADDE-NEXT:    slli a2, a0, 5
+; ZBAXSH3ADDE-NEXT:    sh3add a0, a0, a2
+; ZBAXSH3ADDE-NEXT:    add a0, a0, a1
+; ZBAXSH3ADDE-NEXT:    ret
 ;
 ; ZBAXSH2ADDSH3ADD-LABEL: addmul40:
 ; ZBAXSH2ADDSH3ADD:       # %bb.0:
@@ -1105,11 +1135,27 @@ define i64 @zext_mul68(i32 signext %a) {
 ; RV64I-NEXT:    mulhu a0, a0, a1
 ; RV64I-NEXT:    ret
 ;
-; ZBAXSH2ADDSLLIUW-LABEL: zext_mul68:
-; ZBAXSH2ADDSLLIUW:       # %bb.0:
-; ZBAXSH2ADDSLLIUW-NEXT:    slli.uw a1, a0, 6
-; ZBAXSH2ADDSLLIUW-NEXT:    sh2add.uw a0, a0, a1
-; ZBAXSH2ADDSLLIUW-NEXT:    ret
+; ZBAXSH2ADDUWE-LABEL: zext_mul68:
+; ZBAXSH2ADDUWE:       # %bb.0:
+; ZBAXSH2ADDUWE-NEXT:    li a1, 17
+; ZBAXSH2ADDUWE-NEXT:    slli a1, a1, 34
+; ZBAXSH2ADDUWE-NEXT:    slli a0, a0, 32
+; ZBAXSH2ADDUWE-NEXT:    mulhu a0, a0, a1
+; ZBAXSH2ADDUWE-NEXT:    ret
+;
+; ZBAXSLLIUWE-LABEL: zext_mul68:
+; ZBAXSLLIUWE:       # %bb.0:
+; ZBAXSLLIUWE-NEXT:    li a1, 17
+; ZBAXSLLIUWE-NEXT:    slli a1, a1, 34
+; ZBAXSLLIUWE-NEXT:    slli a0, a0, 32
+; ZBAXSLLIUWE-NEXT:    mulhu a0, a0, a1
+; ZBAXSLLIUWE-NEXT:    ret
+;
+; ZBAXSH2ADDUWSLLIUW-LABEL: zext_mul68:
+; ZBAXSH2ADDUWSLLIUW:       # %bb.0:
+; ZBAXSH2ADDUWSLLIUW-NEXT:    slli.uw a1, a0, 6
+; ZBAXSH2ADDUWSLLIUW-NEXT:    sh2add.uw a0, a0, a1
+; ZBAXSH2ADDUWSLLIUW-NEXT:    ret
 ;
 ; RV64ZBA-LABEL: zext_mul68:
 ; RV64ZBA:       # %bb.0:
@@ -1129,6 +1175,21 @@ define i64 @zext_mul96(i32 signext %a) {
 ; RV64I-NEXT:    srli a0, a0, 25
 ; RV64I-NEXT:    sub a0, a0, a1
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH1ADDE-LABEL: zext_mul96:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    slli a0, a0, 32
+; ZBAXSH1ADDE-NEXT:    srli a0, a0, 32
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a0 
+; ZBAXSH1ADDE-NEXT:    slli a0, a0, 5 
+; ZBAXSH1ADDE-NEXT:    ret
+;
+; ZBAXSLLIUWE-LABEL: zext_mul96:
+; ZBAXSLLIUWE:       # %bb.0:
+; ZBAXSLLIUWE-NEXT:    slli.uw a1, a0, 5
+; ZBAXSLLIUWE-NEXT:    slli.uw a0, a0, 7
+; ZBAXSLLIUWE-NEXT:    sub a0, a0, a1 
+; ZBAXSLLIUWE-NEXT:    ret
 ;
 ; ZBAXSH1ADDSLLIUW-LABEL: zext_mul96:
 ; ZBAXSH1ADDSLLIUW:       # %bb.0:
@@ -1155,6 +1216,22 @@ define i64 @zext_mul160(i32 signext %a) {
 ; RV64I-NEXT:    mulhu a0, a0, a1
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH2ADDE-LABEL: zext_mul160:
+; ZBAXSH2ADDE:       # %bb.0:
+; ZBAXSH2ADDE-NEXT:    slli a0, a0, 32
+; ZBAXSH2ADDE-NEXT:    srli a0, a0, 32
+; ZBAXSH2ADDE-NEXT:    sh2add a0, a0, a0
+; ZBAXSH2ADDE-NEXT:    slli a0, a0, 5
+; ZBAXSH2ADDE-NEXT:    ret
+;
+; ZBAXSLLIUWE-LABEL: zext_mul160:
+; ZBAXSLLIUWE:       # %bb.0:
+; ZBAXSLLIUWE-NEXT:    li a1, 5
+; ZBAXSLLIUWE-NEXT:    slli a1, a1, 37
+; ZBAXSLLIUWE-NEXT:    slli a0, a0, 32
+; ZBAXSLLIUWE-NEXT:    mulhu a0, a0, a1
+; ZBAXSLLIUWE-NEXT:    ret
+;
 ; ZBAXSH2ADDSLLIUW-LABEL: zext_mul160:
 ; ZBAXSH2ADDSLLIUW:       # %bb.0:
 ; ZBAXSH2ADDSLLIUW-NEXT:    slli.uw a0, a0, 5
@@ -1179,6 +1256,22 @@ define i64 @zext_mul288(i32 signext %a) {
 ; RV64I-NEXT:    slli a0, a0, 32
 ; RV64I-NEXT:    mulhu a0, a0, a1
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH3ADDE-LABEL: zext_mul288:
+; ZBAXSH3ADDE:       # %bb.0:
+; ZBAXSH3ADDE-NEXT:    slli a0, a0, 32
+; ZBAXSH3ADDE-NEXT:    srli a0, a0, 32
+; ZBAXSH3ADDE-NEXT:    sh3add a0, a0, a0
+; ZBAXSH3ADDE-NEXT:    slli a0, a0, 5
+; ZBAXSH3ADDE-NEXT:    ret
+;
+; ZBAXSLLIUWE-LABEL: zext_mul288:
+; ZBAXSLLIUWE:       # %bb.0: 
+; ZBAXSLLIUWE-NEXT:    li a1, 9
+; ZBAXSLLIUWE-NEXT:    slli a1, a1, 37
+; ZBAXSLLIUWE-NEXT:    slli a0, a0, 32
+; ZBAXSLLIUWE-NEXT:    mulhu a0, a0, a1
+; ZBAXSLLIUWE-NEXT:    ret
 ;
 ; ZBAXSH3ADDSLLIUW-LABEL: zext_mul288:
 ; ZBAXSH3ADDSLLIUW:       # %bb.0:
@@ -1627,6 +1720,19 @@ define i64 @mul37(i64 %a) {
 ; RV64I-NEXT:    mul a0, a0, a1
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH2ADDE-LABEL: mul37:
+; ZBAXSH2ADDE:       # %bb.0:
+; ZBAXSH2ADDE-NEXT:    sh2add a1, a0, a0
+; ZBAXSH2ADDE-NEXT:    slli a0, a0, 5
+; ZBAXSH2ADDE-NEXT:    add a0, a0, a1
+; ZBAXSH2ADDE-NEXT:    ret
+;
+; ZBAXSH3ADDE-LABEL: mul37:
+; ZBAXSH3ADDE:       # %bb.0:
+; ZBAXSH3ADDE-NEXT:    li a1, 37
+; ZBAXSH3ADDE-NEXT:    mul a0, a0, a1
+; ZBAXSH3ADDE-NEXT:    ret
+;
 ; ZBAXSH2ADDSH3ADD-LABEL: mul37:
 ; ZBAXSH2ADDSH3ADD:       # %bb.0:
 ; ZBAXSH2ADDSH3ADD-NEXT:    sh3add a1, a0, a0
@@ -1670,6 +1776,19 @@ define i64 @mul41(i64 %a) {
 ; RV64I-NEXT:    li a1, 41
 ; RV64I-NEXT:    mul a0, a0, a1
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH2ADDE-LABEL: mul41:
+; ZBAXSH2ADDE:       # %bb.0:
+; ZBAXSH2ADDE-NEXT:    li a1, 41
+; ZBAXSH2ADDE-NEXT:    mul a0, a0, a1
+; ZBAXSH2ADDE-NEXT:    ret
+;
+; ZBAXSH3ADDE-LABEL: mul41:
+; ZBAXSH3ADDE:       # %bb.0:
+; ZBAXSH3ADDE-NEXT:    sh3add a1, a0, a0
+; ZBAXSH3ADDE-NEXT:    slli a0, a0, 5
+; ZBAXSH3ADDE-NEXT:    add a0, a0, a1 
+; ZBAXSH3ADDE-NEXT:    ret
 ;
 ; ZBAXSH2ADDSH3ADD-LABEL: mul41:
 ; ZBAXSH2ADDSH3ADD:       # %bb.0:
@@ -1748,6 +1867,18 @@ define i64 @mul45(i64 %a) {
 ; RV64I-NEXT:    li a1, 45
 ; RV64I-NEXT:    mul a0, a0, a1
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH2ADDE-LABEL: mul45:
+; ZBAXSH2ADDE:       # %bb.0:
+; ZBAXSH2ADDE-NEXT:    li a1, 45
+; ZBAXSH2ADDE-NEXT:    mul a0, a0, a1
+; ZBAXSH2ADDE-NEXT:    ret
+;
+; ZBAXSH3ADDE-LABEL: mul45:
+; ZBAXSH3ADDE:       # %bb.0:
+; ZBAXSH3ADDE-NEXT:    li a1, 45
+; ZBAXSH3ADDE-NEXT:    mul a0, a0, a1
+; ZBAXSH3ADDE-NEXT:    ret
 ;
 ; ZBAXSH2ADDSH3ADD-LABEL: mul45:
 ; ZBAXSH2ADDSH3ADD:       # %bb.0:
@@ -3127,6 +3258,22 @@ define i32 @array_index_sh1_sh2(ptr %p, i64 %idx1, i64 %idx2) {
 ; RV64I-NEXT:    lw a0, 0(a0)
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH2ADDE-LABEL: array_index_sh1_sh2:
+; ZBAXSH2ADDE:       # %bb.0:
+; ZBAXSH2ADDE-NEXT:    slli a1, a1, 3
+; ZBAXSH2ADDE-NEXT:    add a0, a0, a1
+; ZBAXSH2ADDE-NEXT:    sh2add a0, a2, a0
+; ZBAXSH2ADDE-NEXT:    lw a0, 0(a0)
+; ZBAXSH2ADDE-NEXT:    ret
+;
+; ZBAXSH3ADDE-LABEL: array_index_sh1_sh2:
+; ZBAXSH3ADDE:       # %bb.0:
+; ZBAXSH3ADDE-NEXT:    sh3add a0, a1, a0
+; ZBAXSH3ADDE-NEXT:    slli a2, a2, 2
+; ZBAXSH3ADDE-NEXT:    add a0, a0, a2
+; ZBAXSH3ADDE-NEXT:    lw a0, 0(a0)
+; ZBAXSH3ADDE-NEXT:    ret
+;
 ; ZBAXSH2ADDSH3ADD-LABEL: array_index_sh1_sh2:
 ; ZBAXSH2ADDSH3ADD:       # %bb.0:
 ; ZBAXSH2ADDSH3ADD-NEXT:    sh3add a0, a1, a0
@@ -3299,6 +3446,23 @@ define i64 @array_index_sh2_sh3(ptr %p, i64 %idx1, i64 %idx2) {
 ; RV64I-NEXT:    ld a0, 0(a0)
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH2ADDE-LABEL: array_index_sh2_sh3:
+; ZBAXSH2ADDE:       # %bb.0:
+; ZBAXSH2ADDE-NEXT:    slli a1, a1, 5
+; ZBAXSH2ADDE-NEXT:    add a0, a0, a1
+; ZBAXSH2ADDE-NEXT:    slli a2, a2, 3
+; ZBAXSH2ADDE-NEXT:    add a0, a0, a2
+; ZBAXSH2ADDE-NEXT:    ld a0, 0(a0)
+; ZBAXSH2ADDE-NEXT:    ret
+;
+; ZBAXSH3ADDE-LABEL: array_index_sh2_sh3:
+; ZBAXSH3ADDE:       # %bb.0:
+; ZBAXSH3ADDE-NEXT:    slli a1, a1, 5
+; ZBAXSH3ADDE-NEXT:    add a0, a0, a1
+; ZBAXSH3ADDE-NEXT:    sh3add a0, a2, a0
+; ZBAXSH3ADDE-NEXT:    ld a0, 0(a0)
+; ZBAXSH3ADDE-NEXT:    ret
+;
 ; ZBAXSH2ADDSH3ADD-LABEL: array_index_sh2_sh3:
 ; ZBAXSH2ADDSH3ADD:       # %bb.0:
 ; ZBAXSH2ADDSH3ADD-NEXT:    sh2add a1, a1, a2
@@ -3398,6 +3562,23 @@ define i32 @array_index_sh3_sh2(ptr %p, i64 %idx1, i64 %idx2) {
 ; RV64I-NEXT:    add a0, a0, a2
 ; RV64I-NEXT:    lw a0, 0(a0)
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH2ADDE-LABEL: array_index_sh3_sh2:
+; ZBAXSH2ADDE:       # %bb.0:
+; ZBAXSH2ADDE-NEXT:    slli a1, a1, 5
+; ZBAXSH2ADDE-NEXT:    add a0, a0, a1
+; ZBAXSH2ADDE-NEXT:    sh2add a0, a2, a0
+; ZBAXSH2ADDE-NEXT:    lw a0, 0(a0)
+; ZBAXSH2ADDE-NEXT:    ret
+;
+; ZBAXSH3ADDE-LABEL: array_index_sh3_sh2:
+; ZBAXSH3ADDE:       # %bb.0:
+; ZBAXSH3ADDE-NEXT:    slli a1, a1, 5
+; ZBAXSH3ADDE-NEXT:    add a0, a0, a1
+; ZBAXSH3ADDE-NEXT:    slli a2, a2, 2
+; ZBAXSH3ADDE-NEXT:    add a0, a0, a2
+; ZBAXSH3ADDE-NEXT:    lw a0, 0(a0)
+; ZBAXSH3ADDE-NEXT:    ret
 ;
 ; ZBAXSH2ADDSH3ADD-LABEL: array_index_sh3_sh2:
 ; ZBAXSH2ADDSH3ADD:       # %bb.0:
@@ -3614,6 +3795,23 @@ define i64 @regression(i32 signext %x, i32 signext %y) {
 ; RV64I-NEXT:    sub a0, a0, a1
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH1ADDE-LABEL: regression:
+; ZBAXSH1ADDE:       # %bb.0:
+; ZBAXSH1ADDE-NEXT:    subw a0, a0, a1
+; ZBAXSH1ADDE-NEXT:    slli a0, a0, 32 
+; ZBAXSH1ADDE-NEXT:    srli a0, a0, 32
+; ZBAXSH1ADDE-NEXT:    sh1add a0, a0, a0
+; ZBAXSH1ADDE-NEXT:    slli a0, a0, 3
+; ZBAXSH1ADDE-NEXT:    ret
+;
+; ZBAXSLLIUWE-LABEL: regression:
+; ZBAXSLLIUWE:       # %bb.0:
+; ZBAXSLLIUWE-NEXT:    subw a0, a0, a1
+; ZBAXSLLIUWE-NEXT:    slli.uw a1, a0, 3
+; ZBAXSLLIUWE-NEXT:    slli.uw a0, a0, 5
+; ZBAXSLLIUWE-NEXT:    sub a0, a0, a1
+; ZBAXSLLIUWE-NEXT:    ret
+;
 ; ZBAXSH1ADDSLLIUW-LABEL: regression:
 ; ZBAXSH1ADDSLLIUW:       # %bb.0:
 ; ZBAXSH1ADDSLLIUW-NEXT:    subw a0, a0, a1
@@ -3795,6 +3993,22 @@ define i64 @bext_mul45(i32 %1, i32 %2) {
 ; RV64I-NEXT:    mul a0, a0, a1
 ; RV64I-NEXT:    ret
 ;
+; ZBAXSH2ADDE-LABEL: bext_mul45:
+; ZBAXSH2ADDE:       # %bb.0: # %entry
+; ZBAXSH2ADDE-NEXT:    srlw a0, a0, a1
+; ZBAXSH2ADDE-NEXT:    andi a0, a0, 1
+; ZBAXSH2ADDE-NEXT:    li a1, 45
+; ZBAXSH2ADDE-NEXT:    mul a0, a0, a1
+; ZBAXSH2ADDE-NEXT:    ret
+;
+; ZBAXSH3ADDE-LABEL: bext_mul45:
+; ZBAXSH3ADDE:       # %bb.0: # %entry
+; ZBAXSH3ADDE-NEXT:    srlw a0, a0, a1
+; ZBAXSH3ADDE-NEXT:    andi a0, a0, 1
+; ZBAXSH3ADDE-NEXT:    li a1, 45
+; ZBAXSH3ADDE-NEXT:    mul a0, a0, a1
+; ZBAXSH3ADDE-NEXT:    ret
+;
 ; ZBAXSH2ADDSH3ADD-LABEL: bext_mul45:
 ; ZBAXSH2ADDSH3ADD:       # %bb.0: # %entry
 ; ZBAXSH2ADDSH3ADD-NEXT:    srlw a0, a0, a1
@@ -3890,6 +4104,25 @@ define ptr @gep_lshr_i32(ptr %0, i64 %1) {
 ; RV64I-NEXT:    mulhu a1, a1, a2
 ; RV64I-NEXT:    add a0, a0, a1
 ; RV64I-NEXT:    ret
+;
+; ZBAXSH2ADDE-LABEL: gep_lshr_i32:
+; ZBAXSH2ADDE:       # %bb.0: # %entry
+; ZBAXSH2ADDE-NEXT:    slli a1, a1, 30
+; ZBAXSH2ADDE-NEXT:    srli a1, a1, 32
+; ZBAXSH2ADDE-NEXT:    sh2add a1, a1, a1 
+; ZBAXSH2ADDE-NEXT:    slli a1, a1, 4
+; ZBAXSH2ADDE-NEXT:    add a0, a0, a1
+; ZBAXSH2ADDE-NEXT:    ret
+;
+; ZBAXSLLIUWE-LABEL: gep_lshr_i32:
+; ZBAXSLLIUWE:       # %bb.0: # %entry
+; ZBAXSLLIUWE-NEXT:    srli a1, a1, 2
+; ZBAXSLLIUWE-NEXT:    li a2, 5
+; ZBAXSLLIUWE-NEXT:    slli a2, a2, 36
+; ZBAXSLLIUWE-NEXT:    slli a1, a1, 32
+; ZBAXSLLIUWE-NEXT:    mulhu a1, a1, a2
+; ZBAXSLLIUWE-NEXT:    add a0, a0, a1
+; ZBAXSLLIUWE-NEXT:    ret
 ;
 ; ZBAXSH2ADDSLLIUW-LABEL: gep_lshr_i32:
 ; ZBAXSH2ADDSLLIUW:       # %bb.0: # %entry
